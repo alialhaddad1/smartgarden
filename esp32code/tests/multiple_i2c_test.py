@@ -59,11 +59,15 @@ led = Pin(13, Pin.OUT)
 led.value(0)
 
 # Multiple I2C Busses using software I2C (SoftI2C)
-i2c_1 = SoftI2C(scl=Pin(25), sda=Pin(26))  # First MPU6050
-#i2c_2 = SoftI2C(scl=Pin(25), sda=Pin(26))  # Second MPU6050
+i2c_1 = SoftI2C(scl=Pin(25), sda=Pin(26))  # Test MPU6050
+# i2c_1 = SoftI2C(scl=Pin(14), sda=Pin(22))  # First MPU6050
+# i2c_2 = SoftI2C(scl=Pin(25), sda=Pin(26))  # Second MPU6050
+# i2c_3 = SoftI2C(scl=Pin(32), sda=Pin(33))  # Third MPU6050
+# i2c_4 = SoftI2C(scl=Pin(4), sda=Pin(5))    # Fourth MPU6050
 
 # Initialize MPU6050 sensors
-mpu_sensors = [MPU(i2c_1)]
+mpu_sensors = [MPU(i2c_1)] #Test
+# mpu_sensors = [MPU(i2c_1), MPU(i2c_2), MPU(i2c_3), MPU(i2c_4)]
 
 def wifi_connect():
     wlan = network.WLAN(network.STA_IF)
