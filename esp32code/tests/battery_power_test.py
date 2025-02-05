@@ -1,0 +1,1 @@
+#File: battery_power_test.py for testing esp32 on battery power (as compared to plugged into laptop)
