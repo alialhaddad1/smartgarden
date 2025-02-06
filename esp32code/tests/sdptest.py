@@ -1,6 +1,6 @@
 #File: sdptest.py for organized code for esp32
 #Imports
-
+import network, time
 #Pins
 
 #Classes (i.e. MPU module from Lab 5/6)
@@ -11,7 +11,7 @@
 # Make multiple attempts at connection over 60 seconds maximum (or max num attempts = 5?)
 
 #Imports
-# import network
+# import network, time
 
 #WiFi Login Credentials
 ssid = 'iPhoneCS'
@@ -23,13 +23,23 @@ def wifi_connect():
     global password
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    if not wlan.isconnected():
-        print('connecting to network...')
+    # if not wlan.isconnected():
+    #     print('connecting to network...')
+    #     wlan.connect(ssid, password)
+    #     while not wlan.isconnected():
+    #         pass
+    numAttempts = 1
+    while numAttempts <= 5 and not wlan.isconnected():
+        print(f"Attempt #{numAttempts} for connecting to network...")
         wlan.connect(ssid, password)
-        while not wlan.isconnected():
-            pass
-    print('Connected to', ssid)
-    print('IP Address:', wlan.ifconfig()[0])
+        numAttempts += 1
+        time.sleep(5) #5-second delay between connection attempts
+    if wlan.isconnected():
+        print('Connected to', ssid)
+        print('IP Address:', wlan.ifconfig()[0])
+    else:
+        print('Maximum number of connection attempts reached')
+    #IDEA: make this function return 0 or 1 upon success or failure to easily make tests
     return
 ########################################
 ###GET SENSOR DATA###
