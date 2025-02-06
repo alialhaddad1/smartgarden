@@ -20,6 +20,8 @@ import network, time, urequests
 
 #Connect to WiFi
 def wifi_connect():
+    #IDEA: make ssid and password parameters of the function for testing purposes
+
     # global ssid
     # global password
     ssid = 'iPhoneCS'
