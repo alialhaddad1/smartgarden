@@ -2,7 +2,7 @@ import time
 import machine
 from machine import Pin, SoftI2C, Timer
 from neopixel import NeoPixel
-import network, esp, esp32, socket, urequests
+import network, esp, esp32, urequests
 
 class MPU:
     ACC_X = 0x3B
