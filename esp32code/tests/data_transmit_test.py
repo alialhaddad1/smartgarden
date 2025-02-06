@@ -1,8 +1,4 @@
-import time
-import machine
-from machine import Pin, I2C, Timer
-from neopixel import NeoPixel
-import network, esp, esp32, socket, urequests
+import network, urequests
 
 #WiFi Login Credentials
 ssid = 'iPhoneCS'
@@ -26,9 +22,9 @@ def wifi_connect():
 #Reads motion sensor activation status from ThingSpeak
 def motion_enable():
     try:
-        acc_x = 1
-        acc_y = 2
-        acc_z = 3
+        acc_x = 1 #test value
+        acc_y = 2 #test value
+        acc_z = 3 #test value
         url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field1={acc_x}&field2={acc_y}&field3={acc_z}"
         response = urequests.get(url)
         response.close()
