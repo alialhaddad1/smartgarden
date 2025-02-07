@@ -1,4 +1,6 @@
+import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -95,6 +97,16 @@ export default function Home() {
           />
           Go to nextjs.org →
         </a>
+        <nav>
+          <ul>
+            <li>
+              <Link href="/add">Add a Plant</Link>
+            </li>
+            <li>
+              <Link href="/monitor">Monitor your Plants</Link>
+            </li>
+          </ul>
+        </nav>
       </footer>
     </div>
   );
