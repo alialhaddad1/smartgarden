@@ -59,14 +59,14 @@ led = Pin(13, Pin.OUT)
 led.value(0)
 
 # Multiple I2C Busses using software I2C (SoftI2C)
-i2c_1 = SoftI2C(scl=Pin(25), sda=Pin(26))  # Test MPU6050
-# i2c_1 = SoftI2C(scl=Pin(14), sda=Pin(22))  # First MPU6050
+i2c_1 = SoftI2C(scl=Pin(14), sda=Pin(22))  # First MPU6050
+i2c_2 = SoftI2C(scl=Pin(32), sda=Pin(33))  # Second MPU6050
 # i2c_2 = SoftI2C(scl=Pin(25), sda=Pin(26))  # Second MPU6050
 # i2c_3 = SoftI2C(scl=Pin(32), sda=Pin(33))  # Third MPU6050
 # i2c_4 = SoftI2C(scl=Pin(4), sda=Pin(5))    # Fourth MPU6050
 
 # Initialize MPU6050 sensors
-mpu_sensors = [MPU(i2c_1)] #Test
+mpu_sensors = [MPU(i2c_1), MPU(i2c_2)] #Test
 # mpu_sensors = [MPU(i2c_1), MPU(i2c_2), MPU(i2c_3), MPU(i2c_4)]
 
 def wifi_connect():
@@ -87,7 +87,7 @@ def mpu_calibrate():
             acc_x, acc_y, acc_z = mpu.acceleration()
             print(f"Sensor {idx + 1}: Acc X={acc_x:.2f}, Acc Y={acc_y:.2f}, Acc Z={acc_z:.2f}")
         count += 1
-        time.sleep(1)
+        time.sleep(4)
 
 # Connect to WiFi and start calibration
 #wifi_connect()
