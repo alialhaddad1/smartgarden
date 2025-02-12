@@ -1,0 +1,1 @@
+All ESP32 Hardware Connections (using GPIO Pin Numbers)

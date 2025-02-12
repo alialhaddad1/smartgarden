@@ -113,6 +113,7 @@ def transmit_data():
 #Pins
 
 #Receive LED Color Data from ThingSpeak
+#WARNING: the data received from ThingSpeak is a string for hex color code, so it needs to be converted to RGB values
 def receive_data():
     #IDEA: make this function take in read url as input arg
     try: #WARNING: needs to loop for 3 attempts before producing error message
@@ -129,6 +130,21 @@ def receive_data():
         return
 
 #Set LED Indicator Color on Hardware (WARNING: might be unnecessary if LED color is set in 'main' or 'received_data')
+'''
+HELPER FUNCTION: hex_to_rgb
+def hex_to_rgb(hex_str):
+    """Convert a hex color string to RGB tuple (0-255)."""
+    hex_str = hex_str.lstrip("#")  # Remove '#' if present
+    if len(hex_str) != 6:
+        raise ValueError("Invalid hex color format")
+    
+    r = int(hex_str[0:2], 16)  # Convert first 2 chars to integer
+    g = int(hex_str[2:4], 16)  # Convert middle 2 chars to integer
+    b = int(hex_str[4:6], 16)  # Convert last 2 chars to integer
+
+    return (r, g, b)
+'''
+
 # def set_led_color(color):
 #     return 0
 
