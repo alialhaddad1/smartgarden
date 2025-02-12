@@ -1,19 +1,26 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import SearchBar from "../components/SearchBar"; // Import the search bar component
+
+// Define the structure of a plant item from DynamoDB
+interface Plant {
+  plantName: { S: string };
+  moisture?: { S: string };
+  sunlight?: { S: string };
+  temperature?: { S: string };
+}
 
 export default function AddPage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Plant[]>([]); // Define type for results array
 
-  const handleSearch = async () => {
+  const handleSearch = async (query: string) => {
     if (!query.trim()) return;
-    
-    const res = await fetch(`/api/search?query=${query}`);
-    const data = await res.json();
-    
+
+    const res = await fetch(`/api/search?q=${query}`);
+    const data: Plant[] = await res.json(); // Explicitly define API response type
+
     setResults(data); // Update results with response from API
   };
 
@@ -22,38 +29,27 @@ export default function AddPage() {
       <h1>Add</h1>
       <p>This page allows users to add plants to their collection.</p>
       <nav>
-          <ul>
-            <li>
-              <Link href="/">Home Page</Link>
-            </li>
-          </ul>
+        <ul>
+          <li>
+            <Link href="/">Home Page</Link>
+          </li>
+        </ul>
       </nav>
+
       <h1 className="text-xl font-bold mb-4">Search for a Plant</h1>
-      
-      <input
-        type="text"
-        placeholder="Enter plant name..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="border p-2 rounded w-full"
-      />
-      
-      <button
-        onClick={handleSearch}
-        className="mt-2 p-2 bg-green-500 text-black rounded"
-      >
-        Search
-      </button>
+
+      {/* Use the SearchBar component */}
+      <SearchBar onSearch={handleSearch} />
 
       {/* Display results */}
       <div className="mt-4">
         {results.length > 0 ? (
           results.map((plant, index) => (
             <div key={index} className="p-2 border-b">
-              <h2 className="text-lg font-semibold">{"One"}</h2> {/*plant.name*/}
-              <p>Moisture Needs: {"Two"}</p> {/*plant.moisture*/}
-              <p>Sunlight Needs: {"Three"}</p> {/*plant.sunlight*/}
-              <p>Temperature Range: {"Four"}</p> {/*plant.temperature*/}
+              <h2 className="text-lg font-semibold">{plant.plantName.S}</h2>
+              <p>Moisture Needs: {plant.moisture?.S || "N/A"}</p>
+              <p>Sunlight Needs: {plant.sunlight?.S || "N/A"}</p>
+              <p>Temperature Range: {plant.temperature?.S || "N/A"}</p>
             </div>
           ))
         ) : (
