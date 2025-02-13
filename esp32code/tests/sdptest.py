@@ -250,4 +250,8 @@ ThingSpeak Transmissions: Lab 4 & 5/6
     -Code uploaded to the ESP32 will have:
         -removed comments
         -removed debug-related functionality
+    -Use following code to check free space
+        import os
+        print(os.statvfs('/'))
+
 '''
