@@ -131,16 +131,16 @@ def receive_data():
 
 #Set LED Indicator Color on Hardware (WARNING: might be unnecessary if LED color is set in 'main' or 'received_data')
 '''
-HELPER FUNCTION: hex_to_rgb
+HELPER FUNCTION: hex_to_rgb (WARNING: MAY NOT BE NEEDED --> CAN IMPLEMENT DIRECTLY IN DATA RECEIVE FUNCTION)
 def hex_to_rgb(hex_str):
     """Convert a hex color string to RGB tuple (0-255)."""
-    hex_str = hex_str.lstrip("#")  # Remove '#' if present
+    hex_str = hex_str.lstrip("#")  # Remove '#' if present (WARNING: MAY NOT BE NEEDED)
     if len(hex_str) != 6:
         raise ValueError("Invalid hex color format")
     
-    r = int(hex_str[0:2], 16)  # Convert first 2 chars to integer
-    g = int(hex_str[2:4], 16)  # Convert middle 2 chars to integer
-    b = int(hex_str[4:6], 16)  # Convert last 2 chars to integer
+    r = int(hex_str[0:2], 16)  # Convert first 2 chars to integer (red value)
+    g = int(hex_str[2:4], 16)  # Convert middle 2 chars to integer (green value)
+    b = int(hex_str[4:6], 16)  # Convert last 2 chars to integer (blue value)
 
     return (r, g, b)
 '''
@@ -159,6 +159,18 @@ def hex_to_rgb(hex_str):
 Placeholder notes for sleep handling:
 - imports might include "from machine import deepsleep, reset_cause, DEEPSLEEP_RESET, wake_reason"
 - consider configuring a push button to manually start the wake processes
+'''
+'''
+HELPER FUNCTION: get_wake_source (WARNING: NEEDS ADDITIONAL IMPORTS --> deepsleep, reset_cause, DEEPSLEEP_RESET, and/or wake_reason)
+def get_wake_source():
+    if reset_cause() == DEEPSLEEP_RESET:
+        if wake_reason() == 2:
+            print("Woke up due to EXT0 wakeup.") #WARNING: MIGHT NOT BE NEEDED
+        else:
+            print("Woke up due to timer wakeup.")
+    else:
+        print("Woke up normally.")
+    return
 '''
 
 ########################################

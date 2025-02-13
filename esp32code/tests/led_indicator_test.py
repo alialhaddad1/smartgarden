@@ -13,7 +13,8 @@ blue = PWM(Pin(BLUE_PIN), freq=1000, duty_u16=65535)
 
 # Function to set RGB color (Invert for common anode)
 def set_color(r, g, b):
-    red.duty_u16(65535 - int(r * 65535 / 255))   # Invert PWM for common anode
+    # Invert PWM for common anode (WARNING: DEPENDING ON OUR LED INDICATOR, THIS MIGHT NEED TO BE CHANGED)
+    red.duty_u16(65535 - int(r * 65535 / 255))
     green.duty_u16(65535 - int(g * 65535 / 255))
     blue.duty_u16(65535 - int(b * 65535 / 255))
 
