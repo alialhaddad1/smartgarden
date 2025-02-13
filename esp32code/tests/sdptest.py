@@ -195,6 +195,26 @@ def main():
         Process 2B1: Receive LED color data from ThingSpeak
         Process 2B2: Set LED indicator color on hardware
         Process 3: Sleep handling / Deepsleep
+    - Consider using multi-processing to run processes 2A and 2B concurrently
+        import _thread
+        import time
+        def task_1():
+            while True:
+                print("Task 1 is running")
+                time.sleep(2)
+        def task_2():
+            while True:
+                print("Task 2 is running")
+                time.sleep(3)
+        # Start threads
+        _thread.start_new_thread(task_1, ())
+        _thread.start_new_thread(task_2, ())
+        # Main loop
+        while True:
+            print("Main thread running")
+            time.sleep(5)
+
+
     '''
     #Lab 3 Sample
     # get_wake_source()
