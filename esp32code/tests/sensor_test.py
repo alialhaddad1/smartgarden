@@ -1,6 +1,15 @@
-#LIGHT SENSOR TEST CODE
-from machine import Pin, I2C
 import time
+from machine import Pin, ADC, I2C
+#from machine import SoftI2C
+########################################################################################
+'''
+WARNING: NEED TO ADJUST I2C IMPORT TO SOFTI2C FOR ESP32 
+    -Redefine i2c variables from I2C(...) to SoftI2C(...)
+    -Rename i2c variables to light_i2c, temp_i2c, etc.
+    -Redo pin assignments to avoid overlap
+'''
+########################################################################################
+#LIGHT SENSOR TEST CODE
 
 # VEML6030 I2C Address
 VEML6030_ADDR = 0x48
@@ -11,6 +20,7 @@ ALS_DATA = 0x04  # Ambient light data register
 
 # Initialize I2C (Software I2C if needed)
 i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)  # Standard I2C pins
+# light_i2c = SoftI2C(scl=Pin(22), sda=Pin(21))  # Software I2C for light sensor
 
 # Function to write to a register
 def write_register(register, value):
@@ -25,18 +35,8 @@ def read_register(register):
 # Initialize sensor (Gain: 1, Integration time: 100ms, Normal mode)
 write_register(ALS_CONF, 0x0000)
 
-# Read light sensor data continuously
-while True:
-    lux_raw = read_register(ALS_DATA)
-    lux = lux_raw * 0.0036  # Convert raw value to Lux
-    print(f"Ambient Light: {lux:.2f} Lux")
-    time.sleep(1)
-
 ########################################################################################
-
 #SOIL MOISTURE SENSOR TEST CODE
-from machine import Pin, ADC
-import time
 
 # Set up the analog input pin
 moisture_sensor_pin = ADC(Pin(34))  # GPIO 34 is an example pin
@@ -52,21 +52,12 @@ def read_moisture():
     
     return moisture_percentage
 
-# Main program loop
-while True:
-    moisture = read_moisture()
-    print("Soil Moisture: {:.2f}%".format(moisture))
-    time.sleep(1)
-
 ########################################################################################
-
 #TEMPERATURE SENSOR TEST CODE
-
-from machine import Pin, I2C
-import time
 
 # Set up I2C (SDA = GPIO 21, SCL = GPIO 22)
 i2c = I2C(scl=Pin(22), sda=Pin(21), freq=100000)
+# temp_i2c = SoftI2C(scl=Pin(22), sda=Pin(21))  # Software I2C for temperature sensor
 
 # I2C Address for the temperature sensor (example: 0x48 for LM75)
 SENSOR_ADDRESS = 0x48  # Default I2C address, may vary for your sensor
@@ -84,21 +75,12 @@ def read_temperature():
     
     return temperature
 
-# Main program loop
-while True:
-    temperature = read_temperature()
-    print("Temperature: {:.2f} °C".format(temperature))
-    time.sleep(1)
-
 ########################################################################################
-
 #BATTERY SENSOR TEST CODE
-
-from machine import Pin, I2C
-import time
 
 # Initialize I2C (SDA = GPIO 21, SCL = GPIO 22)
 i2c = I2C(scl=Pin(22), sda=Pin(21), freq=100000)
+# battery_i2c = SoftI2C(scl=Pin(22), sda=Pin(21))  # Software I2C for battery sensor
 
 # I2C address of the fuel gauge (usually 0x55 for BQ27441)
 FUEL_GAUGE_ADDRESS = 0x55
@@ -124,12 +106,26 @@ def read_battery_soc():
     soc = raw_soc * 0.1  # State of Charge in percentage (multiplied by 0.1)
     return soc
 
-# Main program loop
+########################################################################################
+# Main Program Loop
 while True:
+    #Light Sensor
+    lux_raw = read_register(ALS_DATA)
+    lux = lux_raw * 0.0036  # Convert raw value to Lux
+    print(f"Ambient Light: {lux:.2f} Lux")
+
+    #Soil Moisture Sensor
+    moisture = read_moisture()
+    print("Soil Moisture: {:.2f}%".format(moisture))
+
+    #Temperature Sensor
+    temperature = read_temperature()
+    print("Temperature: {:.2f} °C".format(temperature))
+
+    #Battery Fuel Gauge Sensor
     voltage = read_battery_voltage()
     soc = read_battery_soc()
-    
     print("Battery Voltage: {:.2f} V".format(voltage))
     print("Battery SOC: {:.2f}%".format(soc))
-    
-    time.sleep(2)  # Wait for 2 seconds before reading again
+
+    time.sleep(2)  # Delay for readability
