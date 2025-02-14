@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 
 // Configure DynamoDB
-const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
+const dynamoDB = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
