@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
-import SearchBar from "../components/SearchBar"; // Import the search bar component
+import SearchBar from "../components/searchBar"; // Import the search bar component
 
 // Define the structure of a plant item from DynamoDB
 interface Plant {
@@ -21,7 +21,22 @@ export default function AddPage() {
     const res = await fetch(`/api/search?q=${query}`);
     const data: Plant[] = await res.json(); // Explicitly define API response type
 
-    setResults(data); // Update results with response from API
+    setResults(data || []); // Update results with response from API (|| [] may not be correct)
+  };
+
+  // Function to add plant to plantData
+  const addToPlantData = async (plant: any) => {
+    const res = await fetch("/api/add-plant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(plant),
+    });
+
+    if (res.ok) {
+      alert(`${plant.plantName.S} added to your collection!`);
+    } else {
+      alert("Error adding plant. Try again.");
+    }
   };
 
   return (
@@ -50,6 +65,12 @@ export default function AddPage() {
               <p>Moisture Needs: {plant.moisture?.S || "N/A"}</p>
               <p>Sunlight Needs: {plant.sunlight?.S || "N/A"}</p>
               <p>Temperature Range: {plant.temperature?.S || "N/A"}</p>
+              <button
+                onClick={() => addToPlantData(plant)}
+                className="mt-2 p-2 bg-blue-500 text-white rounded"
+              >
+                Add to Collection
+              </button>
             </div>
           ))
         ) : (
