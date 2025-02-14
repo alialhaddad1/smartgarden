@@ -86,6 +86,8 @@ def mpu_calibrate():
         for idx, mpu in enumerate(mpu_sensors):
             acc_x, acc_y, acc_z = mpu.acceleration()
             print(f"Sensor {idx + 1}: Acc X={acc_x:.2f}, Acc Y={acc_y:.2f}, Acc Z={acc_z:.2f}")
+            # temp = mpu.temperature()
+            # print(f"Sensor {idx + 1}: Temp={temp:.2f}°F")
         count += 1
         time.sleep(4)
 

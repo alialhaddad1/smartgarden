@@ -19,7 +19,7 @@ def wifi_connect():
     print('IP Address:', wlan.ifconfig()[0])
     return
 
-#Reads motion sensor activation status from ThingSpeak
+#Writes motion sensor data to ThingSpeak
 def motion_enable():
     try:
         acc_x = 1 #test value
@@ -31,8 +31,22 @@ def motion_enable():
         print("Data sent successfully")
         return
     except Exception as e:
-        print(f"Error reading status from ThingSpeak Channel: {e}")
+        print(f"Error writing data to ThingSpeak Channel: {e}")
+        return
+    
+def hexcode_send(colorcode):
+    try:
+        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field4={colorcode}"
+        response = urequests.get(url)
+        response.close()
+        print("Data sent successfully")
+        return
+    except Exception as e:
+        print(f"Error writing data to ThingSpeak Channel: {e}")
         return
     
 wifi_connect()
-motion_enable()
+# motion_enable()
+hexcode_send(0xFF0000)
+# hexcode_send(0x00FF00)
+# hexcode_send(0x0000FF)
