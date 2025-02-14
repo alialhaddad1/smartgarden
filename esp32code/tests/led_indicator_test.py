@@ -50,7 +50,7 @@ def hexcode_receive():
         data = response.json()
         recent_value = data["feeds"][-1]["field4"]
         response.close()
-        print(f"Returning status: {recent_value.strip().upper()}") #debug
+        print(f"Data received: {recent_value.strip().upper()}") #debug
         return recent_value.strip().upper()
     except Exception as e:
         print(f"Error reading status from ThingSpeak Channel: {e}")
@@ -76,6 +76,18 @@ def set_color(r, g, b):
     return
 
 #Main loop
+
+# import random
+# count = 0
+# while count < 10: 
+#     rand_r = random.randint(0,255)
+#     rand_g = random.randint(0,255)
+#     rand_b = random.randint(0,255)
+#     set_color(rand_r,rand_g,rand_b)
+#     time.sleep(2)
+#     count += 1
+# set_color(0,0,0)
+
 wifi_connect()
 numAttempts = input("Enter number of colors to test:")
 numAttempts = int(numAttempts)
@@ -87,7 +99,6 @@ while count < numAttempts:
     time.sleep(5)
     receivedstring = hexcode_receive()
     r,g,b = hex_to_rgb(receivedstring)
-    print(f"Received color code is {receivedstring}")
     set_color(r,g,b)
     print(f"Color set to R: {r}, G: {g}, B: {b}")
     count += 1
