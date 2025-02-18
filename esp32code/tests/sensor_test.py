@@ -26,10 +26,12 @@ i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)  # Standard I2C pins
 def write_register(register, value):
     data = value.to_bytes(2, 'little')  # Convert value to 2 bytes (little-endian)
     i2c.writeto_mem(VEML6030_ADDR, register, data)
+    # light_i2c.writeto_mem(VEML6030_ADDR, register, data)
 
 # Function to read 16-bit data from a register
 def read_register(register):
     data = i2c.readfrom_mem(VEML6030_ADDR, register, 2)
+    # data = light_i2c.readfrom_mem(VEML6030_ADDR, register, 2)
     return int.from_bytes(data, 'little')
 
 # Initialize sensor (Gain: 1, Integration time: 100ms, Normal mode)
@@ -66,6 +68,7 @@ SENSOR_ADDRESS = 0x48  # Default I2C address, may vary for your sensor
 def read_temperature():
     # Read 2 bytes of data from the sensor
     data = i2c.readfrom(SENSOR_ADDRESS, 2)
+    # data = temp_i2c.readfrom(SENSOR_ADDRESS, 2)
     
     # Combine the two bytes (most sensors will return temperature data as a 16-bit value)
     temp_raw = data[0] << 8 | data[1]
@@ -92,6 +95,7 @@ SOC_REGISTER = 0x04      # State of Charge (SOC) register
 # Function to read 2 bytes from a register
 def read_register(register):
     data = i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
+    # data = battery_i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
     return (data[0] << 8) | data[1]
 
 # Function to read battery voltage (in mV)
