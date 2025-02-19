@@ -73,8 +73,9 @@ mpu_sensors = [MPU(i2c_1), MPU(i2c_2)] #Test
 #Writes motion sensor data to ThingSpeak
 def temp_data_transmit():
     try:
-        temp1 = mpu_sensors[0].temperature()
-        temp2 = mpu_sensors[1].temperature()
+        temp1 = int(mpu_sensors[0].temperature())
+        temp2 = int(mpu_sensors[1].temperature())
+        print(f"Sensor 1: {temp1} °F, Sensor 2: {temp2} °F") #debug
         url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field5={temp1}&field6={temp2}"
         response = urequests.get(url)
         response.close()
@@ -99,6 +100,7 @@ blue_led = PWM(Pin(BLUE_PIN), freq=1000, duty_u16=65535)
 #Send color data to ThingSpeak
 def hexcode_send(colorcode):
     try:
+        print(f"Sending color data: {colorcode}")
         url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field4={colorcode}"
         response = urequests.get(url)
         response.close()
