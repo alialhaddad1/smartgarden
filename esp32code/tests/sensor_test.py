@@ -1,4 +1,4 @@
-import time
+import time, dht
 from machine import Pin, ADC, I2C
 #from machine import SoftI2C
 ########################################################################################
@@ -41,42 +41,40 @@ write_register(ALS_CONF, 0x0000)
 #SOIL MOISTURE SENSOR TEST CODE
 
 # Set up the analog input pin
-moisture_sensor_pin = ADC(Pin(34))  # GPIO 34 is an example pin
-moisture_sensor_pin.atten(ADC.ATTN_0DB)  # Set attenuation to 0dB (default: 0-3.3V range)
+moisture_sensor_pin = ADC(Pin(36))
+moisture_sensor_pin.atten(ADC.ATTN_11DB)
 
 # Function to read the soil moisture value
 def read_moisture():
     # Read the analog value from the sensor (0-4095)
     moisture_value = moisture_sensor_pin.read()
-    
-    # Convert to percentage (0 = dry, 100 = wet)
     moisture_percentage = (moisture_value / 4095) * 100
-    
+    #max value is 12.9
+    #min value is 8.6
+    moisture_percentage = (abs(moisture_percentage - 12.9)/4.3)*100
+    if (moisture_percentage > 100):
+        return 100
+    if (moisture_percentage < 0):
+        return 0
     return moisture_percentage
 
 ########################################################################################
-#TEMPERATURE SENSOR TEST CODE
+#TEMPERATURE/HUMIDITY SENSOR TEST CODE
 
-# Set up I2C (SDA = GPIO 21, SCL = GPIO 22)
-i2c = I2C(scl=Pin(22), sda=Pin(21), freq=100000)
-# temp_i2c = SoftI2C(scl=Pin(22), sda=Pin(21))  # Software I2C for temperature sensor
+#temp_sensor_pin = ADC(Pin(39))  # GPIO 34 is an example pin
+#temp_sensor_pin.atten(ADC.ATTN_11DB)  # Set attenuation to 0dB (default: 0-3.3V range)
+dht_sensor = dht.DHT22(Pin(4))
 
-# I2C Address for the temperature sensor (example: 0x48 for LM75)
-SENSOR_ADDRESS = 0x48  # Default I2C address, may vary for your sensor
-
-# Function to read temperature
-def read_temperature():
-    # Read 2 bytes of data from the sensor
-    data = i2c.readfrom(SENSOR_ADDRESS, 2)
-    # data = temp_i2c.readfrom(SENSOR_ADDRESS, 2)
-    
-    # Combine the two bytes (most sensors will return temperature data as a 16-bit value)
-    temp_raw = data[0] << 8 | data[1]
-    
-    # Convert the raw data to temperature (adjust depending on your sensor)
-    temperature = temp_raw / 256  # Example for LM75, divide by 256 to get Celsius
-    
-    return temperature
+# Function to read the temperature/humidity values
+def read_dht():
+    try:
+        dht_sensor.measure()  # Trigger measurement
+        temp = dht_sensor.temperature()  # Get temperature in Celsius
+        temp = (9*temp/5)+32
+        hum = dht_sensor.humidity()  # Get humidity in %
+        return temp, hum
+    except OSError as e:
+        print("Failed to read sensor:", e)
 
 ########################################################################################
 #BATTERY SENSOR TEST CODE
@@ -122,9 +120,10 @@ while True:
     moisture = read_moisture()
     print("Soil Moisture: {:.2f}%".format(moisture))
 
-    #Temperature Sensor
-    temperature = read_temperature()
-    print("Temperature: {:.2f} °C".format(temperature))
+    #Temperature/Humidity Sensor
+    temperature, humidity = read_dht()
+    print("Temperature: {:.2f}".format(temperature))
+    print("Humidity: {:.2f}%".format(humidity))
 
     #Battery Fuel Gauge Sensor
     voltage = read_battery_voltage()

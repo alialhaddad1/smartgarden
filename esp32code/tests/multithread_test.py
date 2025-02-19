@@ -1,6 +1,7 @@
 from machine import Pin, PWM, SoftI2C
 import network, urequests, time, random
 import uasyncio as asyncio
+import _thread
 
 # WiFi credentials
 ssid = 'iPhoneCS'
@@ -180,7 +181,8 @@ async def main():
     count = 0
     while count < 5:
         print(f"Loop {count+1}")
-        await asyncio.gather(process_a(), process_b())
+        # await asyncio.gather(process_a(), process_b())
+        
         print("Waiting for 5 seconds before next loop")
         time.sleep(5)
         count += 1
