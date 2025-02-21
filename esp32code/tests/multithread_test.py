@@ -147,9 +147,9 @@ def hexcode_receive():
 
 #Convert hex color code string to RGB
 def hex_to_rgb(hex_str):
-    hex_str = hex_str.lstrip("#")  # Remove '#' if present (WARNING: MAY NOT BE NEEDED)
-    if len(hex_str) != 6:
-        raise ValueError("Invalid hex color format")
+    # hex_str = hex_str.lstrip("#")  # Remove '#' if present (WARNING: MAY NOT BE NEEDED)
+    # if len(hex_str) != 6:
+    #     raise ValueError("Invalid hex color format")
     r = int(hex_str[0:2], 16)  # Convert first 2 chars to integer (red value)
     g = int(hex_str[2:4], 16)  # Convert middle 2 chars to integer (green value)
     b = int(hex_str[4:6], 16)  # Convert last 2 chars to integer (blue value)

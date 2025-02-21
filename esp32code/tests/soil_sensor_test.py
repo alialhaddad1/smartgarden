@@ -32,9 +32,7 @@ def read_dht():
         temp = dht_sensor.temperature()  # Get temperature in Celsius
         temp = (9*temp/5)+32
         hum = dht_sensor.humidity()  # Get humidity in %
-
-        return temp, hum
-        
+        return temp, hum 
     except OSError as e:
         print("Failed to read sensor:", e)
 
