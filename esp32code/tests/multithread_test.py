@@ -135,6 +135,10 @@ def hexcode_receive():
             data = response.json()
             recent_value = data["feeds"][-1]["field4"]
             response.close()
+            check = isinstance(recent_value, str)
+            check = check and len(recent_value) == 6
+            if not check:
+                raise ValueError("Received value is not a string of length 6")
             print(f"Data received: {recent_value.strip().upper()}") #debug
             return recent_value.strip().upper()
         except Exception as e:

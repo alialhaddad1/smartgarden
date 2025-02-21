@@ -2,8 +2,8 @@ from machine import ADC, Pin
 import time
 import dht
 
-moisture_sensor_pin = ADC(Pin(36))
-moisture_sensor_pin.atten(ADC.ATTN_11DB)
+moisture_sensor_pin = ADC(Pin(36))  # GPIO 34 is an example pin
+moisture_sensor_pin.atten(ADC.ATTN_11DB)  # Set attenuation to 0dB (default: 0-3.3V range)
 
 #temp_sensor_pin = ADC(Pin(39))  # GPIO 34 is an example pin
 #temp_sensor_pin.atten(ADC.ATTN_11DB)  # Set attenuation to 0dB (default: 0-3.3V range)
@@ -32,16 +32,19 @@ def read_dht():
         temp = dht_sensor.temperature()  # Get temperature in Celsius
         temp = (9*temp/5)+32
         hum = dht_sensor.humidity()  # Get humidity in %
+
         return temp, hum
+        
     except OSError as e:
         print("Failed to read sensor:", e)
 
 # Test the soil moisture sensor
 count = 0
-while count < 10:
+numAttempts = input("Please enter the number of sensor readings to be measured: ")
+numAttempts = int(numAttempts)
+while count < numAttempts:
     moisture = read_moisture()
     print("Soil Moisture: {:.2f}%".format(moisture))
-
     temp, humidity = read_dht()
     print("Temperature: {:.2f}".format(temp))
     print("Humidity: {:.2f}%".format(humidity))
