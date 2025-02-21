@@ -1,7 +1,12 @@
-from machine import Pin, PWM, SoftI2C
-import network, urequests, time, random
-import uasyncio as asyncio
-import _thread
+from machine import Pin, PWM, ADC
+import network, urequests, time, random, dht, _thread
+
+threadlock = _thread.allocate_lock()
+
+# Hardware Setup
+moisture_sensor_pin = ADC(Pin(36))
+moisture_sensor_pin.atten(ADC.ATTN_11DB)
+dht_sensor = dht.DHT22(Pin(4))
 
 # WiFi credentials
 ssid = 'iPhoneCS'
@@ -23,68 +28,77 @@ def wifi_connect():
     return
 
 ################################################################################
+#SENSOR MEASURE FUNCTIONS
 
-class MPU:
-    ACC_X = 0x3B
-    ACC_Y = 0x3D
-    ACC_Z = 0x3F
-    TEMP = 0x41
-    GYRO_X = 0x43
-    GYRO_Y = 0x45
-    GYRO_Z = 0x47
+# Function to read the soil moisture value
+def read_moisture():
+    # Read the analog value from the sensor (0-4095)
+    moisture_value = moisture_sensor_pin.read()
+    moisture_percentage = (moisture_value / 4095) * 100
+    #max value is 12.9
+    #min value is 8.6
+    moisture_percentage = (abs(moisture_percentage - 12.9)/4.3)*100
+    if (moisture_percentage > 100):
+        return 100
+    if (moisture_percentage < 0):
+        return 0
+    return moisture_percentage
 
-    def acceleration(self):
-        acc_x = self.i2c.readfrom_mem(self.addr, MPU.ACC_X, 2)
-        acc_y = self.i2c.readfrom_mem(self.addr, MPU.ACC_Y, 2)
-        acc_z = self.i2c.readfrom_mem(self.addr, MPU.ACC_Z, 2)
-
-        acc_x = self.__bytes_to_int(acc_x) / 16384 * 9.81
-        acc_y = self.__bytes_to_int(acc_y) / 16384 * 9.81
-        acc_z = self.__bytes_to_int(acc_z) / 16384 * 9.81
-
-        return acc_x, acc_y, acc_z
-
-    def temperature(self):
-        temp = self.i2c.readfrom_mem(self.addr, self.TEMP, 2)
-        temp = self.__bytes_to_int(temp)
-        return self.__celsius_to_fahrenheit(temp / 340 + 36.53)
-
-    def __bytes_to_int(self, data):
-        if not data[0] & 0x80:
-            return data[0] << 8 | data[1]
-        return -(((data[0] ^ 0xFF) << 8) | (data[1] ^ 0xFF) + 1)
-
-    @staticmethod
-    def __celsius_to_fahrenheit(temp):
-        return temp * 9 / 5 + 32
-
-    def __init__(self, i2c, addr=0x68):
-        self.i2c = i2c
-        self.addr = addr
-        self.i2c.writeto(self.addr, bytearray([107, 0]))
-        print(f'Initialized MPU6050 at address {hex(self.addr)}.')
-
-# Multiple I2C Busses using software I2C (SoftI2C)
-i2c_1 = SoftI2C(scl=Pin(14), sda=Pin(22))  # First MPU6050
-i2c_2 = SoftI2C(scl=Pin(32), sda=Pin(33))  # Second MPU6050
-
-# Initialize MPU6050 sensors
-mpu_sensors = [MPU(i2c_1), MPU(i2c_2)] #Test
-
-#Writes motion sensor data to ThingSpeak
-def temp_data_transmit():
+# Function to read the temperature/humidity values
+def read_dht():
     try:
-        temp1 = int(mpu_sensors[0].temperature())
-        temp2 = int(mpu_sensors[1].temperature())
-        print(f"Sensor 1: {temp1} °F, Sensor 2: {temp2} °F") #debug
-        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field5={temp1}&field6={temp2}"
-        response = urequests.get(url)
-        response.close()
-        print("Data sent successfully")
-        return
-    except Exception as e:
-        print(f"Error writing data to ThingSpeak Channel: {e}")
-        return
+        dht_sensor.measure()  # Trigger measurement
+        temp = dht_sensor.temperature()  # Get temperature in Celsius
+        temp = (9*temp/5)+32
+        hum = dht_sensor.humidity()  # Get humidity in %
+        return temp, hum
+    except OSError as e:
+        print("Failed to read sensor:", e)
+
+# Function to read the light sensor value
+def read_light():
+    return random.randint(0, 100) #random value for testing
+
+#ThingSpeak Channel Field Numbers
+temperature_field = 1
+moisture_field = 2
+light_field = 3
+humidity_field = 5
+
+#Read all sensor data
+def read_all():
+    global temperature_field
+    global moisture_field
+    global light_field
+    global humidity_field
+    moisture = read_moisture()
+    temp, humidity = read_dht()
+    light = read_light()
+    return temp, moisture, light, humidity
+
+#Send all sensor data to ThingSpeak
+def send_all():
+    temp, moisture, light, humidity = read_all()
+    print("Soil Moisture: {:.2f}%".format(moisture))
+    print("Temperature: {:.2f}".format(temp))
+    print("Humidity: {:.2f}%".format(humidity))
+    print("Light: {:.2f}%".format(light))
+
+    #send_to_thingspeak(1, "moisture", moisture)
+    #send_to_thingspeak(2, "temperature", temp)
+    #send_to_thingspeak(3, "humidity", humidity)
+    #send_to_thingspeak(4, "light", light)
+    with threadlock:
+        try:
+            print(f"Sending all sensor data to ThingSpeak")
+            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{humidity_field}={humidity}"
+            response = urequests.get(url)
+            response.close()
+            print("Data sent successfully")
+            return
+        except Exception as e:
+            print(f"Error writing data to ThingSpeak Channel: {e}")
+            return
 
 ################################################################################
 
@@ -100,30 +114,32 @@ blue_led = PWM(Pin(BLUE_PIN), freq=1000, duty_u16=65535)
 
 #Send color data to ThingSpeak
 def hexcode_send(colorcode):
-    try:
-        print(f"Sending color data: {colorcode}")
-        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field4={colorcode}"
-        response = urequests.get(url)
-        response.close()
-        print("Data sent successfully")
-        return
-    except Exception as e:
-        print(f"Error writing data to ThingSpeak Channel: {e}")
-        return
+    with threadlock:
+        try:
+            print(f"Sending color data: {colorcode}")
+            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field4={colorcode}"
+            response = urequests.get(url)
+            response.close()
+            print("Data sent successfully")
+            return
+        except Exception as e:
+            print(f"Error writing data to ThingSpeak Channel: {e}")
+            return
 
 #Receive recent color data from ThingSpeak
 def hexcode_receive():
-    try:
-        url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
-        response = urequests.get(url)
-        data = response.json()
-        recent_value = data["feeds"][-1]["field4"]
-        response.close()
-        print(f"Data received: {recent_value.strip().upper()}") #debug
-        return recent_value.strip().upper()
-    except Exception as e:
-        print(f"Error reading status from ThingSpeak Channel: {e}")
-        return
+    with threadlock:
+        try:
+            url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
+            response = urequests.get(url)
+            data = response.json()
+            recent_value = data["feeds"][-1]["field4"]
+            response.close()
+            print(f"Data received: {recent_value.strip().upper()}") #debug
+            return recent_value.strip().upper()
+        except Exception as e:
+            print(f"Error reading status from ThingSpeak Channel: {e}")
+            return
 
 #Convert hex color code string to RGB
 def hex_to_rgb(hex_str):
@@ -159,35 +175,55 @@ def set_color(r, g, b):
     return
 
 ################################################################################
+a_done = False
+b_done = False
 
-async def process_a():
+def process_a(n):
     #Process A
-    red,green,blue = choose_rand_color()
-    colorstring = rgb_to_hex(red,green,blue)
-    hexcode_send(colorstring)
-    print("Waiting for 5 seconds for database to update")
-    time.sleep(5)
-    receivedstring = hexcode_receive()
-    r,g,b = hex_to_rgb(receivedstring)
-    set_color(r,g,b)
-    print(f"Color set to R: {r}, G: {g}, B: {b}")
-
-async def process_b():
-    temp_data_transmit()
-
-#Main loop
-async def main():
-    wifi_connect()
-    count = 0
-    while count < 5:
-        print(f"Loop {count+1}")
-        # await asyncio.gather(process_a(), process_b())
-        
-        print("Waiting for 5 seconds before next loop")
+    global a_done
+    for i in range(n):
+        print(f"Task A iteration {i+1}")
+        red,green,blue = choose_rand_color()
+        colorstring = rgb_to_hex(red,green,blue)
+        hexcode_send(colorstring)
+        print("Waiting for 5 seconds for database to update")
         time.sleep(5)
-        count += 1
-    print("Done!")
-    time.sleep(5)
-    set_color(0,0,0) #Turn off LED
+        receivedstring = hexcode_receive()
+        r,g,b = hex_to_rgb(receivedstring)
+        set_color(r,g,b)
+        print(f"Color set to R: {r}, G: {g}, B: {b}")
+        time.sleep(10)
+    a_done = True
 
-asyncio.run(main())
+def process_b(n):
+    #Process B
+    global b_done
+    for i in range(n):
+        print(f"Task B iteration {i+1}")
+        send_all()
+        time.sleep(15)
+    b_done = True
+
+#Main Process
+wifi_connect()
+numLoops = input("Enter number of loops: ")
+numLoops = int(numLoops)
+a_thread = _thread.start_new_thread(process_a, (numLoops,))
+b_thread = _thread.start_new_thread(process_b, (numLoops,))
+while not a_done and not b_done:
+    time.sleep(0.1)
+set_color(0,0,0) #Turn off LED
+print("Main program finished")
+
+'''
+Notes:
+- The code is designed to run two processes concurrently using _thread.start_new_thread()
+- Process A sends a random color code to ThingSpeak, waits for 5 seconds, reads the color code from ThingSpeak, sets the LED to that color, and waits for 10 seconds
+- Process B sends all sensor data to ThingSpeak every 15 seconds
+- The main program waits for both processes to finish before turning off the LED and ending
+- The main program also waits for 0.1 seconds between checks to see if both processes are done
+
+Errors:
+- Currently, making simultaneous requests (or too frequent requests) to ThingSpeak causes the transmission to fail
+- Using threadlock on all send/receive requests to ThingSpeak currently helps the issue, but isn't perfect
+'''
