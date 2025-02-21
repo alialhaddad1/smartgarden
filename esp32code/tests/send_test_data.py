@@ -66,25 +66,26 @@ def wifi_connect():
     return
 
 #Send data to the server
-# def send_to_thingspeak(fieldnum, datatype, data):
-#     try:
-#         print(f"Sending {datatype} value: {data}")
-#         url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{fieldnum}={data}"
-#         response = urequests.get(url)
-#         response.close()
-#         print("Data sent successfully")
-#         return
-#     except Exception as e:
-#         print(f"Error writing data to ThingSpeak Channel: {e}")
-#         return
-
+def send_to_thingspeak(fieldnum, datatype, data):
+    try:
+        print(f"Sending {datatype} value: {data}")
+        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{fieldnum}={data}"
+        response = urequests.get(url)
+        response.close()
+        print("Data sent successfully")
+        return
+    except Exception as e:
+        print(f"Error writing data to ThingSpeak Channel: {e}")
+        return
+    
 #ThingSpeak Channel Field Numbers
 temperature_field = 1
 moisture_field = 2
 light_field = 3
 humidity_field = 5
 
-def send_all():
+#Read all sensor data
+def read_all():
     global temperature_field
     global moisture_field
     global light_field
@@ -92,6 +93,11 @@ def send_all():
     moisture = read_moisture()
     temp, humidity = read_dht()
     light = read_light()
+    return temp, moisture, light, humidity
+
+#Send all sensor data to ThingSpeak
+def send_all():
+    temp, moisture, light, humidity = read_all()
     print("Soil Moisture: {:.2f}%".format(moisture))
     print("Temperature: {:.2f}".format(temp))
     print("Humidity: {:.2f}%".format(humidity))
@@ -119,10 +125,14 @@ def send_all():
 wifi_connect()
 # Get number of test data points to send
 numPoints = input("Please enter how many data points you would like to send: ")
+numPoints = int(numPoints)
 # Loop to send data
 count = 0
 while count < numPoints:
     print("Sending Data Point", count+1)
     send_all()
-    time.sleep(15) #ThingSpeak free plan limits to 15 seconds between updates
+    if count < numPoints-1:
+        print("Waiting for 15 seconds before sending next data point...")
+        time.sleep(15) #ThingSpeak free plan limits to 15 seconds between updates
     count += 1
+print("Done!")
