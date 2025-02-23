@@ -214,6 +214,7 @@ numLoops = input("Enter number of loops: ")
 numLoops = int(numLoops)
 a_thread = _thread.start_new_thread(process_a, (numLoops,))
 b_thread = _thread.start_new_thread(process_b, (numLoops,))
+# process_b(numLoops)
 while not a_done and not b_done:
     time.sleep(0.1)
 set_color(0,0,0) #Turn off LED
@@ -229,5 +230,9 @@ Notes:
 
 Errors:
 - Currently, making simultaneous requests (or too frequent requests) to ThingSpeak causes the transmission to fail
+    - This is might not be an issue with final design, but this testing code (process A) is making requests too frequently
 - Using threadlock on all send/receive requests to ThingSpeak currently helps the issue, but isn't perfect
+
+Future Improvements:
+- Change Process A to only need to request data from ThingSpeak
 '''

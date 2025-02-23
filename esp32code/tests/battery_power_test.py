@@ -1,44 +1,59 @@
-#File: battery_power_test.py for testing esp32 on battery power (as compared to plugged into laptop)
 from machine import Pin, SoftI2C, I2C
 import time
 
-########################################################################################
-#BATTERY SENSOR TEST CODE
+# Define I2C pins for the ESP32 Feather V2
+i2c_scl = Pin(14)  # SCL pin
+i2c_sda = Pin(22)  # SDA pin
 
-# Initialize I2C (SDA = GPIO 21, SCL = GPIO 22)
-i2c = I2C(scl=Pin(20), sda=Pin(22), freq=100000)
-# battery_i2c = SoftI2C(scl=Pin(20), sda=Pin(22))  # Software I2C for battery sensor
+# Initialize Software I2C on ESP32
+i2c = SoftI2C(scl=i2c_scl, sda=i2c_sda, freq=100000)
 
-# I2C address of the fuel gauge (usually 0x55 for BQ27441)
-FUEL_GAUGE_ADDRESS = 0x55
+# MAX17048 register addresses
+REG_VCELL = 0x02    # Voltage register
+REG_SOC = 0x04      # State of Charge (Battery %)
+REG_MODE = 0x06     # Mode register
+REG_STATUS = 0x1A   # Status register
 
-# Register addresses for BQ27441 (or similar fuel gauges)
-VOLTAGE_REGISTER = 0x02  # Battery Voltage register
-SOC_REGISTER = 0x04      # State of Charge (SOC) register
-
-# Function to read 2 bytes from a register
 def read_register(register):
-    data = i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
-    # data = battery_i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
-    return (data[0] << 8) | data[1]
+    # Read 2 bytes from the specified register
+    data = i2c.readfrom_mem(0x36, register, 2)
+    return data
 
-# Function to read battery voltage (in mV)
-def read_battery_voltage():
-    raw_voltage = read_register(VOLTAGE_REGISTER)
-    voltage = raw_voltage * 0.00125  # Voltage in volts (divide by 1000 for mV to V conversion)
-    return voltage
+def get_voltage_raw():
+    # Read the voltage raw data from the VCELL register (0x02)
+    data = read_register(REG_VCELL)
+    return data
 
-# Function to read battery SOC (State of Charge in percentage)
-def read_battery_soc():
-    raw_soc = read_register(SOC_REGISTER)
-    soc = raw_soc * 0.1  # State of Charge in percentage (multiplied by 0.1)
-    return soc
+def get_soc_raw():
+    # Read the raw data from the state of charge (SOC) register (0x04)
+    data = read_register(REG_SOC)
+    return data
 
-########################################################################################
-for i in range(10):
-    voltage = read_battery_voltage()
-    soc = read_battery_soc()
-    print("Battery Voltage: {:.2f} V".format(voltage))
-    print("Battery SOC: {:.2f}%".format(soc))
-    time.sleep(3)
-print("Battery Fuel Gauge Test Complete")
+def get_status():
+    # Read the status register (0x08)
+    data = read_register(REG_STATUS)
+    return data
+
+# Example usage
+i2c.writeto_mem(0x36, 0x00, b'\x00')
+
+time.sleep(3)
+
+data = i2c.readfrom_mem(0x36, 0x06, 2)
+print("Test Read from 0x06:", data)
+
+status = get_status()
+print("Status Register:", status)
+
+raw_voltage = get_voltage_raw()
+raw_soc = get_soc_raw()
+print("Raw Voltage Data:", raw_voltage)
+print("Raw SOC Data:", raw_soc)
+
+
+
+# devices = i2c.scan()
+# if devices:
+#     print("I2C devices found:", devices)
+# else:
+#     print("No I2C devices found.")
