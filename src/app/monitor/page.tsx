@@ -28,7 +28,7 @@ export default function MonitorPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
-  const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2&results=2" }];
+  const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2&results=1" }];
 
   // Remove plant function
   const removePlant = async (plantName: string) => {
@@ -54,33 +54,37 @@ export default function MonitorPage() {
       await Promise.all(
         channel.map(async (channel) => {
           const response = await fetch(
-            `https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2`
+            `https://api.thingspeak.com/channels/${channel.id}/feeds.json?api_key=${channel.apiKey}&results=1`
           );
           const data = await response.json();
-          
+  
+          console.log("Raw ThingSpeak API response:", data); // Debugging
+  
           if (data.feeds && data.feeds.length > 0) {
-            console.log("ThingSpeak Response:", data.feeds[0]); // Debugging Line
             const entry = data.feeds[0]; 
+            
             results[channel.id] = {
               created_at: entry.created_at,
-              field1: entry.field1 !== null ? Number(entry.field1) : null,
-              field2: entry.field2 !== null ? Number(entry.field2) : null,
-              field3: entry.field3 !== null ? Number(entry.field3) : null,
-              field4: entry.field4 ?? null, // Keep field4 as-is (string or null)
-              field5: entry.field5 !== null ? Number(entry.field5) : null,
-              field6: entry.field6 !== null ? Number(entry.field6) : null,
-              field7: entry.field7 !== null ? Number(entry.field7) : null,
-              field8: entry.field8 !== null ? Number(entry.field8) : null,
+              field1: entry.field1 ? Number(entry.field1) : null,
+              field2: entry.field2 ? Number(entry.field2) : null,
+              field3: entry.field3 ? Number(entry.field3) : null,
+              field4: entry.field4 ?? null, // Keep as string for hex codes
+              field5: entry.field5 ? Number(entry.field5) : null,
+              field6: entry.field6 ? Number(entry.field6) : null,
+              field7: entry.field7 ? Number(entry.field7) : null,
+              field8: entry.field8 ? Number(entry.field8) : null,
             };
           }
         })
       );
   
+      console.log("Processed ThingSpeak Data:", results); // Debugging
       setThingSpeakData(results);
     } catch (error) {
       console.error("Error fetching ThingSpeak data:", error);
     }
   };
+  
 
   const fetchPlants = async () => {
     try {
