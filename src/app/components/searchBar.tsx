@@ -22,6 +22,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         placeholder="Search for a plant..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        style={{ color: "black" }}
         className="border p-2 rounded w-full"
       />
       <button
