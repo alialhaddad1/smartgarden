@@ -53,23 +53,6 @@ class MAX17048:
         soc = raw[0] + (raw[1] / 256.0)  # Integer part + fractional part
         return soc
 ################################################################################
-# HARDWARE CONNECTIONS (Directly to ESP32)
-
-# Soil Moisture Sensor
-moisture_sensor_pin = ADC(Pin(36))
-moisture_sensor_pin.atten(ADC.ATTN_11DB)
-# Temperature/Humidity Sensor
-dht_sensor = dht.DHT22(Pin(4))
-# Light Sensor
-'''ENTER LIGHT SENSOR PIN INFO HERE'''
-# Battery Fuel Gauge
-batt_i2c = SoftI2C(scl=Pin(14), sda=Pin(22), freq=400000)
-fuelgauge = MAX17048(batt_i2c)
-# LED Control
-red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
-green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
-blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
-################################################################################
 # GLOBAL VARIABLES
 
 # Thread Lock (for competing resources)
@@ -95,6 +78,23 @@ moisture_field = 2
 humidity_field = 5
 light_field = 3
 soc_field = 6
+################################################################################
+# HARDWARE CONNECTIONS (Directly to ESP32)
+
+# Soil Moisture Sensor
+moisture_sensor_pin = ADC(Pin(36))
+moisture_sensor_pin.atten(ADC.ATTN_11DB)
+# Temperature/Humidity Sensor
+dht_sensor = dht.DHT22(Pin(4))
+# Light Sensor
+'''ENTER LIGHT SENSOR PIN INFO HERE'''
+# Battery Fuel Gauge
+batt_i2c = SoftI2C(scl=Pin(14), sda=Pin(22), freq=400000)
+fuelgauge = MAX17048(batt_i2c)
+# LED Control
+red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
+green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
+blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
 ################################################################################
 # SLEEP FUNCTIONS
 
