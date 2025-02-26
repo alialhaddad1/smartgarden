@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React from "react";
 import { useEffect, useState } from "react";
+import '../styles.css';
 
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {

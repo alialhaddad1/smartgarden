@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import SearchBar from "../components/searchBar"; // Import the search bar component
+import '../styles.css';
 
 // Define the structure of a plant item from DynamoDB
 interface Plant {

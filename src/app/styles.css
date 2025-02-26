@@ -1,0 +1,51 @@
+/* Global styles for Ant Design components */
+body {
+    font-family: 'Liber Baskerville'; /* Set global font */
+    background-image: url('/background.jpg'); /* Set background color for the whole website */
+    background-size: cover;
+    background-position: center; 
+    background-repeat: no-repeat;
+    color: #714a00; /* Default text color */
+  }
+  
+  /* Customizing AntD Buttons */
+  .ant-btn-primary {
+    background-color: rgba(20, 130, 0, 0.65); /* Semi-transparent background */
+    color: white;
+    border-radius: 8px;
+    font-family: 'Concert One';
+  }
+  
+  /* Customizing AntD Titles */
+  .ant-typography {
+    font-family: 'Playfair Display'; /* Custom font for titles */
+    font-size: 400%;
+    color: #306a1d; 
+  }
+  
+  /* Customizing AntD Input fields */
+  .ant-input {
+    border-radius: 4px;
+    border: 1px solid #ddd; /* Light border color */
+  }
+  
+  /* Customize AntD Dropdown menu */
+  .ant-dropdown-menu-item {
+    font-family: 'Libre Baskerville';
+    color: #ddd;
+  }
+  
+  .ant-dropdown-menu-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Customize AntD links */
+  .ant-typography a {
+    color: #1890ff; /* Link color */
+    text-decoration: none;
+  }
+  
+  .ant-typography a:hover {
+    text-decoration: underline;
+  }
+  
