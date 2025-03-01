@@ -308,7 +308,7 @@ def receive_all():
             # print(f"Data received: {recent_value.strip().upper()}") #debug
             # return recent_value.strip().upper()
         except Exception as e:
-            print(f"Error reading LED status from ThingSpeak Channel: {e}") #DEBUG
+            print(f"Error reading all data from ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
             if attempt < max_attempts:  # Wait before retrying
                 time.sleep(5)

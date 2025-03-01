@@ -64,59 +64,55 @@ def wifi_connect():
     print('Connected to', ssid)
     print('IP Address:', wlan.ifconfig()[0])
     return
-
-#Send data to the server
-def send_to_thingspeak(fieldnum, datatype, data):
-    try:
-        print(f"Sending {datatype} value: {data}")
-        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{fieldnum}={data}"
-        response = urequests.get(url)
-        response.close()
-        print("Data sent successfully")
-        return
-    except Exception as e:
-        print(f"Error writing data to ThingSpeak Channel: {e}")
-        return
     
-#ThingSpeak Channel Field Numbers
+# ThingSpeak Channel Info
 temperature_field = 1
 moisture_field = 2
 light_field = 3
+led_field = 4
 humidity_field = 5
+soc_field = 6
 
-#Read all sensor data
+max_attempts = 3 #number of attempts to make urequest to ThingSpeak
+
+# Function to read all sensor values
 def read_all():
-    global temperature_field
-    global moisture_field
-    global light_field
-    global humidity_field
+    moisture = temp = humidity = light = soc = -99
     moisture = read_moisture()
     temp, humidity = read_dht()
     light = read_light()
-    return temp, moisture, light, humidity
+    # soc = fuelgauge.read_soc()
+    # soc = fuelgauge.read_soc() if fuelgauge else -99
+    sensor_list = [temp, moisture, light, "000000",humidity, soc]
+    return sensor_list
 
-#Send all sensor data to ThingSpeak
-def send_all():
-    temp, moisture, light, humidity = read_all()
-    print("Soil Moisture: {:.2f}%".format(moisture))
-    print("Temperature: {:.2f}".format(temp))
-    print("Humidity: {:.2f}%".format(humidity))
-    print("Light: {:.2f}%".format(light))
-
-    #send_to_thingspeak(1, "moisture", moisture)
-    #send_to_thingspeak(2, "temperature", temp)
-    #send_to_thingspeak(3, "humidity", humidity)
-    #send_to_thingspeak(4, "light", light)
-    try:
-        print(f"Sending all sensor data to ThingSpeak")
-        url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{humidity_field}={humidity}"
-        response = urequests.get(url)
-        response.close()
-        print("Data sent successfully")
-        return
-    except Exception as e:
-        print(f"Error writing data to ThingSpeak Channel: {e}")
-        return
+# Function to send data to ThingSpeak
+def send_all(all_field_data):
+    global max_attempts
+    global temperature_field, moisture_field, light_field, led_field, humidity_field, soc_field
+    temp = all_field_data[temperature_field-1]
+    moisture = all_field_data[moisture_field-1]
+    light = all_field_data[light_field-1]
+    led = all_field_data[led_field-1]
+    humidity = all_field_data[humidity_field-1]
+    soc = all_field_data[soc_field-1]
+# with threadlock:
+    for attempt in range(max_attempts):
+        try:
+            print(f"Sending all sensor data to ThingSpeak")
+            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
+            response = urequests.get(url)
+            response.close()
+            print("Data sent successfully") #DEBUG?
+            return
+        except Exception as e:
+            print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
+            print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
+            if attempt < max_attempts:  # Wait before retrying
+                time.sleep(5)
+            else:
+                print("All attempts to update sensor data failed. Exiting...")
+                return
     
 ########################################################################################
 #MAIN PROCESS
@@ -130,9 +126,10 @@ numPoints = int(numPoints)
 count = 0
 while count < numPoints:
     print("Sending Data Point", count+1)
-    send_all()
+    curr_data = read_all() #change curr_data to manually set values (use global field variables to know which index to change)
+    send_all(curr_data)
     if count < numPoints-1:
         print("Waiting for 15 seconds before sending next data point...")
-        time.sleep(15) #ThingSpeak free plan limits to 15 seconds between updates
+        time.sleep(30) #ThingSpeak free plan limits to 15 seconds between updates
     count += 1
 print("Done!")
