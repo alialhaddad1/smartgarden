@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import SearchBar from "../components/searchBar"; // Import the search bar component
+import { Button } from 'antd';
+import '../styles.css';
 
 // Define the structure of a plant item from DynamoDB
 interface Plant {
@@ -17,12 +19,22 @@ export default function AddPage() {
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
-
+  
     const res = await fetch(`/api/search?q=${query}`);
-    const data: Plant[] = await res.json(); // Explicitly define API response type
-
-    setResults(data || []); // Update results with response from API (|| [] may not be correct)
-  };
+    const data: Plant[] = await res.json();
+  
+    if (data) {
+      // Convert both search query and plant names to lowercase for a case-insensitive search
+      const lowerQuery = query.toLowerCase();
+      const filteredData = data.filter((plant) =>
+        plant.plantName.S.toLowerCase().includes(lowerQuery)
+      );
+  
+      setResults(filteredData);
+    } else {
+      setResults([]);
+    }
+  };  
 
   // Function to add plant to plantData
   const addToPlantData = async (plant: any) => {
@@ -41,13 +53,13 @@ export default function AddPage() {
 
   return (
     <div className="p-4">
-      <h1>Add</h1>
-      <p>This page allows users to add plants to their collection.</p>
+      <h1 className="ant-typography">Add</h1>
+      <h2 className="text-xl font-bold mb-4">This page allows users <br></br>to add plants <br></br>to their collection.</h2>
       <nav>
         <ul>
-          <li>
-            <Link href="/">Home Page</Link>
-          </li>
+            <li>
+              <Button className="ant-btn-primary" href="/">Home Page</Button>
+            </li>
         </ul>
       </nav>
 
