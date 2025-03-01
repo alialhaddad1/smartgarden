@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React from "react";
 import { useEffect, useState } from "react";
+import { Button } from 'antd';
 import '../styles.css';
 
 // Define the structure for ThingSpeak data
@@ -29,7 +30,7 @@ export default function MonitorPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
-  const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2&results=1" }];
+  const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2" }];
 
   // Remove plant function
   const removePlant = async (plantName: string) => {
@@ -55,7 +56,8 @@ export default function MonitorPage() {
       await Promise.all(
         channel.map(async (channel) => {
           const response = await fetch(
-            `https://api.thingspeak.com/channels/${channel.id}/feeds.json?api_key=${channel.apiKey}&results=1`
+            //`https://api.thingspeak.com/channels/${channel.id}/feeds.json?api_key=${channel.apiKey}&results=1`
+            `https://api.thingspeak.com/channels/${channel.id}/feeds.json?results=1&api_key=${channel.apiKey}`
           );
           const data = await response.json();
   
@@ -86,7 +88,6 @@ export default function MonitorPage() {
     }
   };
   
-
   const fetchPlants = async () => {
     try {
       const res = await fetch("/api/get-plants");
@@ -114,12 +115,12 @@ export default function MonitorPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Your Plants</h1>
-      <p>This page allows users to view their plants.</p>
+      <h1 className="ant-typography">Your Plants</h1>
+      <h2 className="text-xl font-bold mb-4">This page allows users <br></br>to view their saved plants.</h2>
       <nav>
         <ul>
           <li>
-            <Link href="/">Home Page</Link>
+            <Button className="ant-btn-primary" href="/">Home Page</Button>
           </li>
         </ul>
       </nav>
@@ -150,12 +151,12 @@ export default function MonitorPage() {
           <p>Temperature Range: {selectedPlant.temperature}</p>
   
           {/* Remove Plant Button */}
-          <button
+          <Button
             onClick={() => removePlant(selectedPlant.plantName)}
-            className="mt-2 p-2 bg-red-500 text-white rounded"
+            className="ant-btn-primary"
           >
             Remove from Collection
-          </button>
+          </Button>
         </div>
       )}
   

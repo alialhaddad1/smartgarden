@@ -1,6 +1,7 @@
 "use client"; // Ensure this is a client component
 import React from 'react';
 import { useState } from "react";
+import { Button } from "antd";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -25,12 +26,12 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         style={{ color: "black" }}
         className="border p-2 rounded w-full"
       />
-      <button
+      <Button 
         onClick={handleSearch}
-        className="p-2 bg-green-500 text-black rounded"
+        className="ant-btn-primary"
       >
         Search
-      </button>
+      </Button>
     </div>
   );
 }
