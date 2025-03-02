@@ -127,9 +127,10 @@ count = 0
 while count < numPoints:
     print("Sending Data Point", count+1)
     curr_data = read_all() #change curr_data to manually set values (use global field variables to know which index to change)
+
     send_all(curr_data)
     if count < numPoints-1:
         print("Waiting for 15 seconds before sending next data point...")
-        time.sleep(30) #ThingSpeak free plan limits to 15 seconds between updates
+        time.sleep(30) #ThingSpeak free plan limits to 15 seconds between updates, wait 30 seconds to be safe
     count += 1
 print("Done!")
