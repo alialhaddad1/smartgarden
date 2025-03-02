@@ -10,8 +10,8 @@ REQUIREMENTS
 ################################################################################
 # LIBRARY IMPORTS
 
-from machine import Pin, PWM, ADC, SoftI2C, deepsleep, reset_cause, DEEPSLEEP_RESET, wake_reason, RTC
-import time, network, urequests, dht, esp32
+from machine import Pin, PWM, ADC, SoftI2C, deepsleep, reset_cause, DEEPSLEEP_RESET, wake_reason
+import time, network, urequests, dht, esp32, machine
 
 ################################################################################
 # HELPER FUNCTIONS & CLASSES
@@ -96,6 +96,12 @@ fuelgauge = MAX17048(batt_i2c)
 red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
 green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
 blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
+# rp_num = 33
+# gp_num = 15
+# bp_num = 32
+# red_pin = PWM(Pin(33), freq=1000, duty_u16=65535)
+# green_pin = PWM(Pin(15), freq=1000, duty_u16=65535)
+# blue_pin = PWM(Pin(32), freq=1000, duty_u16=65535)
 ################################################################################
 # SLEEP FUNCTIONS
 
@@ -114,9 +120,19 @@ def get_wake_source():
 
 # Sleep Handler
 def sleep_handler(sleeping_time):
-    print(f"ESP32 is going to sleep for {sleeping_time} minute(s).")
+    if sleeping_time < 1:
+        print(f"ESP32 is going to sleep for {sleeping_time*60:.0f} seconds.")
+    else:
+        print(f"ESP32 is going to sleep for {sleeping_time} minute(s).")
+    time.sleep(3)
+    # global rp_num, gp_num, bp_num, red_pin, green_pin, blue_pin
+    # red_pin.init()   # Ensure the pin is initialized
+    # green_pin.init()
+    # blue_pin.init()
     sleeping_time = int(sleeping_time * 60 * 1000)  # Convert minutes to milliseconds
-    deepsleep(sleeping_time)  # Enter deep sleep
+    #deepsleep(sleeping_time)  # Enter deep sleep
+    machine.lightsleep(sleeping_time)
+    #print("Simulated deepsleep")
     return
 
 ################################################################################
@@ -382,6 +398,8 @@ def main():
     #Connect to Wi-Fi
     if not wifi_connect():
         # print("ESP32 going to sleep...") #DEBUG?
+        set_color(0,0,255) #DEBUG
+        time.sleep(5) #DEBUG
         sleep_handler(sleep_time) #DEBUG?
         return
     
@@ -438,5 +456,10 @@ def main():
 esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH)
 
 ################################################################################
-main()
+check = int(input("Execute main? Enter 1 for yes, 0 for no: "))
+if check == 1:
+    main()
+    print("main() has finished executing") #DEBUG
+    set_color(0,0,0) #DEBUG
+    machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
 ################################################################################
