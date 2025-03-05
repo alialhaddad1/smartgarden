@@ -333,8 +333,6 @@ def set_color(r, g, b):
 
 # Main function to run the program with multi-threading on the branches
 def main():
-    # get_wake_source() #DEBUG
-
     global sleep_time, low_soc
     global temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
 
@@ -344,8 +342,8 @@ def main():
     #Connect to Wi-Fi
     if not wifi_connect():
         # print("ESP32 going to sleep...") #DEBUG?
-        set_color(0,0,255) #DEBUG
-        time.sleep(5) #DEBUG
+        set_color(0,0,0) #DEBUG
+        time.sleep(5) #DEBUG -> sometimes esp goes to sleep before LED updates
         sleep_handler(sleep_time) #DEBUG?
         return
     
