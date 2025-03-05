@@ -1,13 +1,13 @@
 All ESP32 Hardware Connections (using GPIO Pin Numbers)
 
-Temperature Sensor:
--Type: I2C (SCL/SDA)
+Temperature/Humidity Sensor:
+-Type: Analog/ADC
 
 Soil Moisture Sensor:
--Type: ADC
+-Type: Analog/ADC
 
 Light Sensor:
--Type: I2C (SCL/SDA)
+-Type: Analog/ADC
 
 Battery Fuel Gauge:
 -Type: I2C (SCL/SDA)
