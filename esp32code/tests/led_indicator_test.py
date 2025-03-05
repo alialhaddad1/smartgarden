@@ -170,11 +170,11 @@ def send_all(all_field_data):
 # set_color(0,0,0)
 
 wifi_connect()
-numAttempts = input("Enter number of colors to test:")
+numAttempts = input("Enter number of colors to test: ")
 numAttempts = int(numAttempts)
 count = 0
 while count < numAttempts:
-    colorstring = input("Enter hex color code (string):")
+    colorstring = input("Enter hex color code (6-char string): ")
     # hexcode_send(colorstring)
     all_data = [0,0,0,colorstring,0,0]
     send_all(all_data)
