@@ -421,22 +421,46 @@ def main():
 esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH)
 
 ################################################################################
-check = int(input("Execute main? Enter 1 for yes, 0 for no: "))
+print("Testing Mode Options:")
+print("1: Run main() once")
+print("2: Read all sensors for a specified time")
+print("3: Test LED color update with specified color")
+check = int(input("Enter selected testing mode: "))
 if check == 1:
     main()
     print("main() has finished executing") #DEBUG
     set_color(0,0,0) #DEBUG
     machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
-################################################################################
-#Additional Code For Testing
-
-#Continuous testing of all sensor readings
-# while True:
-#     print("Reading all sensors...") #DEBUG?
-#     read_values = read_all()
-#     print("Soil Moisture: {:.2f}%".format(read_values[moisture_field-1]))
-#     print("Temperature: {:.2f} deg F".format(read_values[temperature_field-1]))
-#     print("Humidity: {:.2f}%".format(read_values[humidity_field-1]))
-#     print("Light: {:.2f} lux".format(read_values[light_field-1]))
-#     print("SOC: {:.2f}%".format(read_values[soc_field-1]))
-#     time.sleep(3)
+elif check == 2:
+    readtime = int(input("Enter the time for how sensors should be read (in seconds): "))
+    start_time = time.time()
+    while (time.time() - start_time) < readtime:
+        print("-------------------------------") #DEBUG?
+        read_values = read_all()
+        print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
+        print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
+        print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
+        print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
+        print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
+        time.sleep(3)
+elif check == 3:
+    wifi_connect()
+    numAttempts = input("Enter number of colors to test: ")
+    numAttempts = int(numAttempts)
+    count = 0
+    while count < numAttempts:
+        colorstring = input("Enter hex color code (6-char string): ")
+        # hexcode_send(colorstring)
+        all_data = [0,0,0,colorstring,0,0]
+        send_all(all_data)
+        print("Waiting for 10 seconds for database to update")
+        time.sleep(10)
+        # receivedstring = hexcode_receive()
+        received_data = receive_all()
+        r,g,b = hex_to_rgb(received_data[led_field-1])
+        set_color(r,g,b)
+        print(f"Color set to R: {r}, G: {g}, B: {b}")
+        count += 1
+    print("Done!")
+    time.sleep(5)
+    set_color(0,0,0) #Turn off LED

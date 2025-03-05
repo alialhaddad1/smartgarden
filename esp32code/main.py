@@ -1,0 +1,1 @@
+#File: main.py (code for ESP32 without comments to reduce file size; though may not be needed)
