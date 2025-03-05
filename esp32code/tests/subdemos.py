@@ -16,7 +16,7 @@ Microcontroller Subsystem Demo Requirements
 4)  LED indicator color should be updated within 1 minute of microcontroller connection to Wi-Fi. 
     DEMO: show led status update along with timer 
     - can use the send_test_data file to manually send a LED color of choice to the ESP32, then use demo file with timer
-    - WARNING: need to make sure LED is connected to independent power supply to avoid shutting off when ESP32 goes into deepsleep
+    - can use led_indicator.py file to show the LED color change
 
 5)  Microcontroller should make multiple attempts for Wi-Fi connection over a period of at least 1 minute before shutting down. 
     DEMO: show wifi connection along with timer 

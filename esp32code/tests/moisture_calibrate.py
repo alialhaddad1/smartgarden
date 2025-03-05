@@ -23,6 +23,8 @@ def read_moisture():
     return moisture_percentage
 
 while True:
+    cal_check = int(input("Enter 0 to calibrate sensor values, 1 to read moisture percentage: "))
     calc_percent = read_moisture()
-    print(f"Current Percentage: {calc_percent:.2f}%") #DEBUG
+    if cal_check == 1:
+        print(f"Current Percentage: {calc_percent:.2f}%") #DEBUG
     time.sleep(2)  # Adjust sampling rate as needed

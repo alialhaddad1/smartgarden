@@ -1,3 +1,7 @@
+'''
+WARNING: this file is outdated and requires modifications to work, see files demo.py, moisture_calibrate.py, light_sensor.py, etc
+'''
+
 import time, dht
 from machine import Pin, ADC, I2C
 #from machine import SoftI2C
@@ -22,16 +26,16 @@ moisture_sensor_pin.atten(ADC.ATTN_11DB)
 
 # Function to read the soil moisture value
 def read_moisture():
+    global cal_max, cal_min
     # Read the analog value from the sensor (0-4095)
-    moisture_value = moisture_sensor_pin.read()
-    moisture_percentage = (moisture_value / 4095) * 100
-    #max value is 12.9
-    #min value is 8.6
-    moisture_percentage = (abs(moisture_percentage - 12.9)/4.3)*100
-    if (moisture_percentage > 100):
-        return 100
-    if (moisture_percentage < 0):
-        return 0
+    sensor_value = moisture_sensor_pin.read()
+    # Calibrate the min and max values (these values are specific to the sensor and environment, and may need to be adjusted manually
+    if sensor_value <= cal_min:
+        sensor_value = cal_min
+    elif sensor_value >= cal_max:
+        sensor_value = cal_max
+
+    moisture_percentage = 100 - round(((sensor_value - cal_min)/(cal_max - cal_min))*100, 2)
     return moisture_percentage
 
 ########################################################################################

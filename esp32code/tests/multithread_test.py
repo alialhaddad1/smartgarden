@@ -1,3 +1,9 @@
+'''
+WARNING: this code will not be used (i.e. multithreading causes issues with ThingSpeak requests)
+    - This file is a test to see if multithreading can be used for multiple processes
+    - File will be archived
+'''
+
 from machine import Pin, PWM, ADC
 import network, urequests, time, random, dht, _thread
 

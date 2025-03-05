@@ -1,3 +1,8 @@
+'''
+NOTES:
+    -this file should be modified before use to avoid null values being written into ThingSpeak
+'''
+
 import network, urequests
 
 #WiFi Login Credentials

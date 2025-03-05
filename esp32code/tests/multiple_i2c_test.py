@@ -1,3 +1,8 @@
+'''
+This file has served its purpose for testing the SoftI2C library for using multiple I2C devices with the
+esp32 microcontroller. File should be archived
+'''
+
 import time
 import machine
 from machine import Pin, SoftI2C, Timer
