@@ -173,6 +173,7 @@ export default function MonitorPage() {
               <p><strong>Field 3:</strong> {entry.field3 !== null ? entry.field3 : "N/A"}</p>
               <p><strong>Field 4:</strong> {entry.field4 ?? "N/A"}                       </p>
               <p><strong>Field 5:</strong> {entry.field5 !== null ? entry.field5 : "N/A"}</p>
+              <p><strong>Field 6:</strong> {entry.field6 !== null ? entry.field6 : "N/A"}</p>
             </div>
           ))
         ) : (
