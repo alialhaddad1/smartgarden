@@ -67,6 +67,10 @@ max_timeout = 15 #time to wait for wifi connection (in seconds)
 # Battery Low Charge Threshold
 low_soc = 20 #percentage
 
+#Soil Moisture Sensor Calibration
+cal_max = 450 #sensor value read with sensor submerged in water
+cal_min = 350 #sensor value read with sensor in dry air
+
 # Wi-Fi Credentials
 ssid = 'iPhoneCS'
 password = 'password408'
@@ -140,12 +144,16 @@ def sleep_handler(sleeping_time):
 
 # Function to read the soil moisture value
 def read_moisture():
+    global cal_max, cal_min
     # Read the analog value from the sensor (0-4095)
-    moisture_value = moisture_sensor_pin.read()
-    # Calibrate the min and max values (these values are specific to the sensor and environment, and may need to be adjusted manually)
-    cal_max = 12.9 #manually calibrated maximum (dry air)
-    cal_min = 8.6 #manually calibrated minimum (fully submerged in water)
-    moisture_percentage = max(0, min(100,(abs(moisture_value - cal_max)/(cal_max-cal_min))*100))
+    sensor_value = moisture_sensor_pin.read()
+    # Calibrate the min and max values (these values are specific to the sensor and environment, and may need to be adjusted manually
+    if sensor_value <= cal_min:
+        sensor_value = cal_min
+    elif sensor_value >= cal_max:
+        sensor_value = cal_max
+
+    moisture_percentage = 100 - round(((sensor_value - cal_min)/(cal_max - cal_min))*100, 2)
     return moisture_percentage
 
 # Function to read the temperature/humidity values
@@ -181,11 +189,12 @@ def read_light():
 
 # Function to read all sensor values
 def read_all():
+    #WARNING: could implement try-except to try to catch errors for -99 values
     moisture = temp = humidity = light = soc = -99
     moisture = read_moisture()
     temp, humidity = read_dht()
     light = read_light()
-    # soc = fuelgauge.read_soc()
+    soc = fuelgauge.read_soc()
     # soc = fuelgauge.read_soc() if fuelgauge else -99
     sensor_list = [temp, moisture, light, "000000",humidity, soc]
     return sensor_list
@@ -387,7 +396,7 @@ def set_color(r, g, b):
 
 # Main function to run the program with multi-threading on the branches
 def main():
-    get_wake_source() #DEBUG
+    # get_wake_source() #DEBUG
 
     global sleep_time, low_soc
     global temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
@@ -405,15 +414,23 @@ def main():
     
     #Read all recent data from ThingSpeak
     recent_list = receive_all()
+    print("Recent Data from ThingSpeak:") #DEBUG?
+    print("Soil Moisture: {:.2f}%".format(float(recent_list[moisture_field-1])))
+    print("Temperature: {:.2f} deg F".format(float(recent_list[temperature_field-1])))
+    print("Humidity: {:.2f}%".format(float(recent_list[humidity_field-1])))
+    print("Light: {:.2f} lux".format(float(recent_list[light_field-1])))
+    print("SOC: {:.2f}%".format(float(recent_list[soc_field-1])))
+    print(f"LED Hex Code: {recent_list[led_field-1]}")
 
     #Read all sensors
     print("Reading all sensors...") #DEBUG?
     read_values = read_all()
-    print("Soil Moisture: {:.2f}%".format(read_values[moisture_field-1]))
-    print("Temperature: {:.2f} deg F".format(read_values[temperature_field-1]))
-    print("Humidity: {:.2f}%".format(read_values[humidity_field-1]))
-    print("Light: {:.2f} lux".format(read_values[light_field-1]))
-    print("SOC: {:.2f}%".format(read_values[soc_field-1]))
+    print("Sensor Read Values:") #DEBUG?
+    print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
+    print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
+    print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
+    print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
+    print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
 
     #The code block below adjusts the sensor data to be sent to ThingSpeak
     '''
@@ -443,6 +460,13 @@ def main():
 
     #Send all sensor data to ThingSpeak
     send_all(read_values)
+    print("Data Sent to ThingSpeak:") #DEBUG?
+    print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
+    print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
+    print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
+    print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
+    print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
+    print(f"LED Hex Code: {read_values[led_field-1]}")
 
     #Calculate main process runtime (DEBUGGING ONLY)
     runtime = time.time() - start_time
@@ -456,10 +480,22 @@ def main():
 esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH)
 
 ################################################################################
-check = int(input("Execute main? Enter 1 for yes, 0 for no: "))
-if check == 1:
-    main()
-    print("main() has finished executing") #DEBUG
-    set_color(0,0,0) #DEBUG
-    machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
+# check = int(input("Execute main? Enter 1 for yes, 0 for no: "))
+# if check == 1:
+#     main()
+#     print("main() has finished executing") #DEBUG
+#     set_color(0,0,0) #DEBUG
+#     machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
 ################################################################################
+#Additional Code For Testing
+
+#Continuous testing of all sensor readings
+while True:
+    print("Reading all sensors...") #DEBUG?
+    read_values = read_all()
+    print("Soil Moisture: {:.2f}%".format(read_values[moisture_field-1]))
+    print("Temperature: {:.2f} deg F".format(read_values[temperature_field-1]))
+    print("Humidity: {:.2f}%".format(read_values[humidity_field-1]))
+    print("Light: {:.2f} lux".format(read_values[light_field-1]))
+    print("SOC: {:.2f}%".format(read_values[soc_field-1]))
+    time.sleep(5)

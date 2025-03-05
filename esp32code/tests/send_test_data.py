@@ -14,21 +14,25 @@ dht_sensor = dht.DHT22(Pin(4))
 ssid = 'iPhoneCS'
 password = 'password408'
 
+#Soil Moisture Sensor Calibration
+cal_max = 450 #sensor value read with sensor submerged in water
+cal_min = 350 #sensor value read with sensor in dry air
+
 ########################################################################################
 #SENSOR MEASURE FUNCTIONS
 
 # Function to read the soil moisture value
 def read_moisture():
+    global cal_max, cal_min
     # Read the analog value from the sensor (0-4095)
-    moisture_value = moisture_sensor_pin.read()
-    moisture_percentage = (moisture_value / 4095) * 100
-    #max value is 12.9
-    #min value is 8.6
-    moisture_percentage = (abs(moisture_percentage - 12.9)/4.3)*100
-    if (moisture_percentage > 100):
-        return 100
-    if (moisture_percentage < 0):
-        return 0
+    sensor_value = moisture_sensor_pin.read()
+    # Calibrate the min and max values (these values are specific to the sensor and environment, and may need to be adjusted manually
+    if sensor_value <= cal_min:
+        sensor_value = cal_min
+    elif sensor_value >= cal_max:
+        sensor_value = cal_max
+
+    moisture_percentage = 100 - round(((sensor_value - cal_min)/(cal_max - cal_min))*100, 2)
     return moisture_percentage
 
 # Function to read the temperature/humidity values
@@ -127,7 +131,8 @@ count = 0
 while count < numPoints:
     print("Sending Data Point", count+1)
     curr_data = read_all() #change curr_data to manually set values (use global field variables to know which index to change)
-
+    # curr_data[temperature_field-1] = curr_data[moisture_field-1] = curr_data[light_field-1] = curr_data[humidity_field-1] = curr_data[soc_field-1] = 50
+    curr_data[led_field-1] = "FF00FF" #manually set LED color
     send_all(curr_data)
     if count < numPoints-1:
         print("Waiting for 15 seconds before sending next data point...")
