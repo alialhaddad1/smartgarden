@@ -225,32 +225,6 @@ def send_all(all_field_data):
             else:
                 print("All attempts to update sensor data failed. Exiting...")
                 return
-    
-# # Function to receive LED data from ThingSpeak
-# def hexcode_receive():
-#     global max_attempts
-#     for attempt in range(max_attempts):
-#         try:
-#             url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
-#             response = urequests.get(url)
-#             data = response.json()
-#             recent_value = data["feeds"][-1]["field4"]
-#             response.close()
-#             check = isinstance(recent_value, str)
-#             check = check and len(recent_value) == 6
-#             if not check:
-#                 print("Received value is not a string of length 6")
-#                 return "000000"  # Default to black if error occurs
-#             print(f"Data received: {recent_value.strip().upper()}") #debug
-#             return recent_value.strip().upper()
-#         except Exception as e:
-#             print(f"Error reading LED status from ThingSpeak Channel: {e}") #DEBUG
-#             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-#             if attempt < max_attempts:  # Wait before retrying
-#                 time.sleep(5)
-#             else:
-#                 print("All attempts to receive LED status failed. Defaulting LED to black.")
-#                 return "000000"  # Default to black if error occurs
 
 # Function to receive all data from ThingSpeak       
 def receive_all():
@@ -264,10 +238,9 @@ def receive_all():
     for attempt in range(max_attempts):
         try:
             url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
-            # url = "helloworld"
+            # url = "helloworld" #debug (only for testing invalid url)
             response = urequests.get(url)
             data = response.json()
-            # recent_value = data["feeds"][-1]["field4"]
             rec_temp = data["feeds"][-1][f"field{temperature_field}"]
             rec_moisture = data["feeds"][-1][f"field{moisture_field}"]
             rec_light = data["feeds"][-1][f"field{light_field}"]
