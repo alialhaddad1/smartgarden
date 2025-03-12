@@ -5,8 +5,8 @@ moisture_sensor_pin = ADC(Pin(36))  # GPIO 34 is an example pin
 moisture_sensor_pin.atten(ADC.ATTN_11DB)  # Set attenuation to 0dB (default: 0-3.3V range)
 
 # Calibration variables
-cal_max = 360  # ADC max value (dry air)
-cal_min = 290  # ADC min value (submerged in water)
+cal_max = 435  # ADC max value (dry air)
+cal_min = 300  # ADC min value (submerged in water)
 
 def read_moisture():
     global cal_max, cal_min
@@ -22,8 +22,9 @@ def read_moisture():
     moisture_percentage = 100 - round(((sensor_value - cal_min)/(cal_max - cal_min))*100, 2)
     return moisture_percentage
 
+cal_check = int(input("Enter 0 to calibrate sensor values, 1 to read moisture percentage: "))
+    
 while True:
-    cal_check = int(input("Enter 0 to calibrate sensor values, 1 to read moisture percentage: "))
     calc_percent = read_moisture()
     if cal_check == 1:
         print(f"Current Percentage: {calc_percent:.2f}%") #DEBUG

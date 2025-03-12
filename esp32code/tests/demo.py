@@ -69,8 +69,8 @@ max_timeout = 15 #time to wait for wifi connection (in seconds)
 low_soc = 20 #percentage
 
 #Soil Moisture Sensor Calibration
-cal_max = 360 #sensor value read with sensor submerged in water
-cal_min = 290 #sensor value read with sensor in dry air
+cal_max = 435 #sensor value read with sensor submerged in water
+cal_min = 300 #sensor value read with sensor in dry air
 
 # Wi-Fi Credentials
 ssid = 'iPhoneCS'
@@ -188,7 +188,7 @@ def wifi_connect():
     wlan.connect(ssid, password)
     start_time = time.time()
     while not wlan.isconnected() and (time.time() - start_time) < max_timeout:
-        print("Waiting for connection...")
+        print(f"Waiting for connection for {(max_timeout - (time.time()-start_time))} more seconds before timeout")
         time.sleep(3)
 
     if wlan.isconnected():
@@ -259,10 +259,12 @@ def receive_all():
     #Set default values
     rec_temp = rec_moisture = rec_humidity = rec_light = rec_soc = 0
     rec_led = "000000" #debug default color
-    def_rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
+    # def_rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
+    def_rec_list = [0,0,0,"000000",0,0]
     for attempt in range(max_attempts):
         try:
             url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
+            # url = "helloworld"
             response = urequests.get(url)
             data = response.json()
             # recent_value = data["feeds"][-1]["field4"]
@@ -275,7 +277,7 @@ def receive_all():
             rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
             for i in range(len(rec_list)):
                 if rec_list[i] == None:
-                    if i == 3:
+                    if i == led_field-1:
                         rec_list[i] = "000000"
                     else:
                         rec_list[i] = 0
@@ -285,10 +287,12 @@ def receive_all():
         except Exception as e:
             print(f"Error reading all data from ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-            if attempt < max_attempts:  # Wait before retrying
-                time.sleep(5)
-            else:
+            if attempt < max_attempts-1:  # Wait before retrying
+                time.sleep(5+(attempt+1)*3)
+            if attempt == max_attempts-1:
                 print("All attempts to receive ThingSpeak data failed.")
+                def_rec_list = [0,0,0,"000000",0,0]
+                # print("Defaulting to: ", def_rec_list)
                 return def_rec_list
 ################################################################################################################
 # LED CONTROL FUNCTIONS
@@ -317,6 +321,7 @@ def set_color(r, g, b):
 
 # Main function to run the program with multi-threading on the branches
 def main():
+    print("-------------------------------") #DEBUG?
     global sleep_time, low_soc
     global temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
 
@@ -331,27 +336,30 @@ def main():
         sleep_handler(sleep_time) #DEBUG?
         return
     
+    #Record time when wifi has connected (DEBUGGING ONLY)
+    wifi_start_time = time.time() #DEBUG
+
     #Read all recent data from ThingSpeak
     recent_list = receive_all()
-    print("-------------------------------") #DEBUG?
-    print("Recent Data from ThingSpeak:") #DEBUG?
-    print("Soil Moisture: {:.2f}%".format(float(recent_list[moisture_field-1])))
-    print("Temperature: {:.2f} deg F".format(float(recent_list[temperature_field-1])))
-    print("Humidity: {:.2f}%".format(float(recent_list[humidity_field-1])))
-    print("Light: {:.2f} lux".format(float(recent_list[light_field-1])))
-    print("SOC: {:.2f}%".format(float(recent_list[soc_field-1])))
-    print(f"LED Hex Code: {recent_list[led_field-1]}")
+    # print("-------------------------------") #DEBUG?
+    # print("Recent Data from ThingSpeak:") #DEBUG?
+    # print("Soil Moisture: {:.2f}%".format(float(recent_list[moisture_field-1])))
+    # print("Temperature: {:.2f} deg F".format(float(recent_list[temperature_field-1])))
+    # print("Humidity: {:.2f}%".format(float(recent_list[humidity_field-1])))
+    # print("Light: {:.2f} lux".format(float(recent_list[light_field-1])))
+    # print("SOC: {:.2f}%".format(float(recent_list[soc_field-1])))
+    # print(f"LED Hex Code: {recent_list[led_field-1]}")
 
     #Read all sensors
     print("-------------------------------") #DEBUG?
     print("Reading all sensors...") #DEBUG?
     read_values = read_all()
-    print("Sensor Read Values:") #DEBUG?
-    print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
-    print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
-    print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
-    print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
-    print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
+    # print("Sensor Read Values:") #DEBUG?
+    # print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
+    # print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
+    # print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
+    # print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
+    # print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
 
     #The code block below adjusts the sensor data to be sent to ThingSpeak
     '''
@@ -363,17 +371,19 @@ def main():
     sent to ThingSpeak
     '''
     #Filter LED color (account for low battery override color)
+    read_values[soc_field-1] = 15 #DEBUG
     if read_values[soc_field-1] < low_soc and read_values[soc_field-1] != -99:
         #Set LED color to red if battery is low
         read_values[led_field-1] = "FF0000" #low battery color (red?)
         set_color(255,0,0)
     else:
         #Set LED color based on recent data
+        # print(recent_list) #DEBUG
         read_values[led_field-1] = recent_list[led_field-1]
         hexcode = read_values[led_field-1]
         (red, green, blue) = hex_to_rgb(hexcode)
         set_color(red, green, blue)
-    print(f"LED color set to: {read_values[led_field-1]}") #DEBUG
+    print(f"LED color set to: {read_values[led_field-1]} at {time.time() - wifi_start_time} seconds after connecting to wifi") #DEBUG
     #Filter sensor data
     for i in range(len(read_values)):
         if i != led_field-1 and read_values[i] == -99:
@@ -395,6 +405,11 @@ def main():
     runtime = time.time() - start_time
     print(f"Main process runtime: {runtime:.2f} seconds")
 
+    print("ESP32 disconnecting from wifi") #DEBUG?
+    wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
+    wlan.disconnect()  # Disconnect from Wi-Fi
+    wlan.active(False)  # Disable the Wi-Fi interface
+
     #Sleep for 'sleep_time' minutes
     sleep_handler(sleep_time)
     return
@@ -409,9 +424,10 @@ print("2: Read all sensors for a specified time")
 print("3: Test LED color update with specified color")
 check = int(input("Enter selected testing mode: "))
 if check == 1:
-    main()
-    print("main() has finished executing") #DEBUG
-    set_color(0,0,0) #DEBUG
+    for i in range(2):
+        main()
+        print("main() has finished executing") #DEBUG
+        set_color(0,0,0) #DEBUG
     machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
 elif check == 2:
     readtime = int(input("Enter the time for how sensors should be read (in seconds): "))
@@ -424,6 +440,7 @@ elif check == 2:
         print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
         print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
         print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
+        # print(f"Voltage: {fuelgauge.read_voltage()} V")
         time.sleep(3)
 elif check == 3:
     wifi_connect()
