@@ -16,6 +16,9 @@ export async function GET() {
       moisture: item.moisture.S,
       sunlight: item.sunlight.S,
       temperature: item.temperature.S,
+      humidity: item.humidity.S,
+      led: item.led.S,
+      battery: item.battery.S,
     })) || [];
 
     return NextResponse.json(plants);

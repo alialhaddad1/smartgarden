@@ -16,9 +16,12 @@ export async function POST(req: Request) {
       TableName: "plantData",
       Item: {
         plantName: { S: plant.plantName.S },
-        moisture: { S: plant.moisture.S },
-        sunlight: { S: plant.sunlight.S },
-        temperature: { S: plant.temperature.S },
+        moisture: { S: "0" },
+        sunlight: { S: "0" },
+        temperature: { S: "0" },
+        humidity: { S: "0" },
+        led: { S: "00FF00" },
+        battery: {S: "0" }
       },
     };
 

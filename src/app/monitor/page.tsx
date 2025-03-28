@@ -1,9 +1,25 @@
 "use client";
-import Link from "next/link";
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
+import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
+
+/* 
+
+1. Implement LED light change algorithm; you write this value to the database
+  // Low battery = red
+  // No change needed = green
+  // Change needed = orange
+  // Check updated values of battery from database to change to red
+2. Allow ESP32 to write to DynamoDB with update-plant
+3. IMPLEMENT AN "ARE YOU SURE?" CHECK TO THE PLANT REMOVAL BUTTON
+
+*/
+
+
+const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
+//const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
@@ -24,6 +40,9 @@ type Plant = {
   moisture: string;
   sunlight: string;
   temperature: string;
+  humidity: string;
+  led: string;
+  battery: string;
 };
 
 export default function MonitorPage() {
@@ -149,6 +168,8 @@ export default function MonitorPage() {
           <p>Moisture Needs: {selectedPlant.moisture}</p>
           <p>Sunlight Needs: {selectedPlant.sunlight}</p>
           <p>Temperature Range: {selectedPlant.temperature}</p>
+          <p>Humidity Needs: {selectedPlant.humidity}</p>
+          <p>Battery Life: {selectedPlant.battery}</p>
   
           {/* Remove Plant Button */}
           <Button
@@ -168,12 +189,12 @@ export default function MonitorPage() {
             <div key={channelId} className="mt-2 p-2 border rounded">
               <p><strong>Channel ID:</strong> {channelId}</p>
               <p><strong>Timestamp:</strong> {new Date(entry.created_at).toLocaleString()}</p>
-              <p><strong>Field 1:</strong> {entry.field1 !== null ? entry.field1 : "N/A"}</p>
-              <p><strong>Field 2:</strong> {entry.field2 !== null ? entry.field2 : "N/A"}</p>
-              <p><strong>Field 3:</strong> {entry.field3 !== null ? entry.field3 : "N/A"}</p>
-              <p><strong>Field 4:</strong> {entry.field4 ?? "N/A"}                       </p>
-              <p><strong>Field 5:</strong> {entry.field5 !== null ? entry.field5 : "N/A"}</p>
-              <p><strong>Field 6:</strong> {entry.field6 !== null ? entry.field6 : "N/A"}</p>
+              <p><strong>Temperature (F):</strong> {entry.field1 !== null ? entry.field1 : "N/A"}</p>
+              <p><strong>Moisture (%):</strong> {entry.field2 !== null ? entry.field2 : "N/A"}</p>
+              <p><strong>Sunlight (lux):</strong> {entry.field3 !== null ? entry.field3 : "N/A"}</p>
+              <p><strong>LED Color:</strong> {entry.field4 ?? "N/A"}                       </p>
+              <p><strong>Humidity (%):</strong> {entry.field5 !== null ? entry.field5 : "N/A"}</p>
+              <p><strong>Battery Life (%):</strong> {entry.field6 !== null ? entry.field6 : "N/A"}</p>
             </div>
           ))
         ) : (
@@ -183,3 +204,121 @@ export default function MonitorPage() {
     </div>
   );
 }
+
+// I will be updating the LED field with a special algorithm that I will ask you to make. The LED glows: - Green if there are no problems with the plant care
+
+/*export const fetchPlantStatus = async (): Promise<any[]> => {
+  try {
+    const plantDataParams = {
+      TableName: "plantData",
+    };
+
+    // Fetch all plant data from plantData table
+    const plantDataCommand = new ScanCommand(plantDataParams);
+    const plantData = await dynamoDB.send(plantDataCommand);
+
+    return (
+      plantData.Items?.map((plant) => {
+        const moistureMin = Number(plant.moisture?.S) * 0.85;
+        const moistureMax = Number(plant.moisture?.S) * 1.15;
+        const sunlightMin = Number(plant.sunlight?.S) * 0.85;
+        const sunlightMax = Number(plant.sunlight?.S) * 1.15;
+        const tempRange = plant.temperature?.S.split("-").map(Number) || [];
+        const humidityMin = 30; // Minimum humidity threshold (adjustable)
+        const humidityMax = 70; // Maximum humidity threshold (adjustable)
+        const batteryMin = 20; // Minimum battery percentage to alert
+
+        const statuses = [];
+
+        // Check moisture
+        const microMoisture = Number(plant.microMoisture?.S);
+        if (microMoisture < moistureMin)
+          statuses.push({ status: "too little moisture", message: plant.shortageMoisture?.S });
+        if (microMoisture > moistureMax)
+          statuses.push({ status: "too much moisture", message: plant.surplusMoisture?.S });
+
+        // Check sunlight
+        const microSun = Number(plant.microSun?.S);
+        if (microSun < sunlightMin)
+          statuses.push({ status: "too little sunlight", message: plant.shortageSun?.S });
+        if (microSun > sunlightMax)
+          statuses.push({ status: "too much sunlight", message: plant.surplusSun?.S });
+
+        // Check temperature
+        const microTemp = Number(plant.microTemp?.S);
+        if (tempRange.length === 2) {
+          if (microTemp < tempRange[0])
+            statuses.push({ status: "too cold", message: plant.shortageTemp?.S });
+          if (microTemp > tempRange[1])
+            statuses.push({ status: "too hot", message: plant.surplusTemp?.S });
+        }
+
+        // Check humidity
+        const microHumid = Number(plant.microHumid?.S);
+        if (microHumid < humidityMin)
+          statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
+        if (microHumid > humidityMax)
+          statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
+
+        // Check battery
+        const microBattery = Number(plant.microBattery?.S);
+        if (microBattery < batteryMin)
+          statuses.push({ status: "battery low", message: "Recharge or replace battery" });
+
+        // LED status check (optional, no thresholds but can display status)
+        const microLED = plant.microLED?.S;
+        if (microLED) statuses.push({ status: `LED status: ${microLED}` });
+
+        return {
+          plantName: plant.plantName.S,
+          status: statuses.length ? statuses : [{ status: "looking good", message: "Everything is fine" }],
+        };
+      }) || []
+    );
+  } catch (error) {
+    console.error("Error fetching plant status:", error);
+    return [];
+  }
+};
+*/
+
+
+
+/*// Function to fetch sensor data from ESP32 and update the plantData table
+const fetchAndUpdateSensorData = async (plantName) => {
+    try {
+        const response = await fetch(`http://${ESP32_IP}/sensor-data`);
+        if (!response.ok) throw new Error("Failed to fetch sensor data");
+        
+        const { microSun, microTemp, microMoisture } = await response.json();
+        
+        const updatePayload = {
+            plantName: { S: plantName },
+            microSun: { N: microSun.toString() },
+            microTemp: { N: microTemp.toString() },
+            microMoisture: { N: microMoisture.toString() },
+        };
+        
+        const updateRes = await fetch("/api/update-plant", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatePayload),
+        });
+        
+        if (!updateRes.ok) throw new Error("Failed to update plant data");
+        console.log("Plant data updated successfully");
+    } catch (error) {
+        console.error("Error updating sensor data:", error);
+    }
+};
+
+export const useESP32Data = (plantName) => {
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchAndUpdateSensorData(plantName);
+        }, UPDATE_INTERVAL);
+        
+        return () => clearInterval(interval);
+    }, [plantName]);
+};
+*/
