@@ -1,1 +1,0 @@
-#File: mc_subsystem.py (code for ESP32 without comments to reduce file size)
