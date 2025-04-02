@@ -2,7 +2,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
@@ -18,7 +18,7 @@ import '../styles.css';
 */
 
 
-const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
+// const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
 //const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 // Define the structure for ThingSpeak data

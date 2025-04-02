@@ -27,8 +27,13 @@ export async function POST(req: Request) {
 
     await dynamoDB.send(new PutItemCommand(params));
     return NextResponse.json({ message: "Plant added successfully" });
-  } catch (error: any) {
-    console.error("DynamoDB Add Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let errorMessage = "An unknown error occurred";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
