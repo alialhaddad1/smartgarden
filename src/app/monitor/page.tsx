@@ -111,9 +111,14 @@ export default function MonitorPage() {
     try {
       const res = await fetch("/api/get-plants");
       const data = await res.json();
-      setPlants(data);
+      if (!Array.isArray(data)) {
+        console.error("Unexpected response format:", data);
+        setPlants([]); // Ensure plants is always an array
+        return;
+      }
     } catch (error) {
       console.error("Error fetching plants:", error);
+      setPlants([]); // Prevents crashing by ensuring an empty array
     }
   };
 
