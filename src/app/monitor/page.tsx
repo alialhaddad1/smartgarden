@@ -159,11 +159,28 @@ export default function MonitorPage() {
         }}
       >
         <option value="">Select a plant</option>
+        {plants.length > 0 ? (
+          plants.map((plant) => (
+            <div key={plant.plantName} className="plant-card">
+              <h2>{plant.plantName}</h2>
+              <p>Moisture: {plant.moisture || "N/A"}</p>
+              <p>Sunlight: {plant.sunlight || "N/A"}</p>
+              <p>Temperature: {plant.temperature || "N/A"}</p>
+              <p>Humidity: {plant.humidity || "N/A"}</p>
+              <p>LED Status: {plant.led}</p>
+              <p>Battery: {plant.battery || "N/A"}</p>
+            </div>
+          ))
+        ) : (
+          <p>No plants available</p>
+        )}
+        {/*}
         {plants.map((plant) => (
           <option key={plant.plantName} value={plant.plantName}>
             {plant.plantName}
           </option>
         ))}
+        */}
       </select>
   
       {/* Show details of the selected plant */}

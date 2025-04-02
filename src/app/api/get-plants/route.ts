@@ -8,7 +8,7 @@ export const GET = async () => {
   try {
     const params = { TableName: "plantData" };
     const command = new ScanCommand(params);
-    const data = await dynamoDB.send(new ScanCommand(params));
+    const data = await dynamoDB.send(command);
     const plants = data.Items ? data.Items : [];
     /*
     const plants = data.Items?.map((item) => ({
