@@ -27,8 +27,13 @@ export async function GET(req: Request) {
   try {
     const data = await dynamoDB.send(new QueryCommand(params));
     return NextResponse.json(data.Items || []);
-  } catch (error) {
-    console.error("DynamoDB Query Error:", error); // Print full error details
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let errorMessage = "An unknown error occurred";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
