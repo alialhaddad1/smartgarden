@@ -1,11 +1,11 @@
-#File: main.py (code for ESP32 without comments to reduce file size; though may not be needed)
+#File: boot.py (code for ESP32 without comments to reduce file size; though may not be needed)
 '''
 REQUIREMENTS
 '''
 ################################################################################
 # LIBRARY IMPORTS
 
-from machine import Pin, PWM, ADC, SoftI2C, deepsleep, reset_cause, DEEPSLEEP_RESET, wake_reason
+from machine import Pin, PWM, ADC, SoftI2C, reset_cause, DEEPSLEEP_RESET, wake_reason
 import time, network, urequests, dht, esp32, machine
 
 ################################################################################
@@ -277,9 +277,6 @@ def receive_all():
 
 #Convert hex color code string to RGB
 def hex_to_rgb(hex_str):
-    # hex_str = hex_str.lstrip("#")  # Remove '#' if present (WARNING: MAY NOT BE NEEDED)
-    # if len(hex_str) != 6:
-    #     raise ValueError("Invalid hex color format")
     r = int(hex_str[0:2], 16)  # Convert first 2 chars to integer (red value)
     g = int(hex_str[2:4], 16)  # Convert middle 2 chars to integer (green value)
     b = int(hex_str[4:6], 16)  # Convert last 2 chars to integer (blue value)
@@ -377,12 +374,16 @@ def main():
     runtime = time.time() - start_time
     print(f"Main process runtime: {runtime:.2f} seconds")
 
-    #Sleep for 'sleep_time' minutes
+    print("ESP32 disconnecting from wifi") #DEBUG
+    wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
+    wlan.disconnect()  # Disconnect from Wi-Fi
+    wlan.active(False)  # Disable the Wi-Fi interface
+
     sleep_handler(sleep_time)
     return
 
 #External wakeup (optional)
-esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH)
+esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH) #DEBUG
 
 main()
 print("main() has finished executing") #DEBUG
