@@ -70,8 +70,8 @@ numPoints = int(numPoints)
 count = 0
 while count < numPoints:
     print("Sending Data Point", count+1)
-    curr_data = read_all() #change curr_data to manually set values (use global field variables to know which index to change)
-    # curr_data[temperature_field-1] = curr_data[moisture_field-1] = curr_data[light_field-1] = curr_data[humidity_field-1] = curr_data[soc_field-1] = 50
+    curr_data = 6*[0] #initialize data array
+    curr_data[temperature_field-1] = curr_data[moisture_field-1] = curr_data[light_field-1] = curr_data[humidity_field-1] = curr_data[soc_field-1] = 50
     curr_data[led_field-1] = "FF00FF" #manually set LED color
     send_all(curr_data)
     if count < numPoints-1:
