@@ -2,7 +2,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
@@ -17,9 +17,16 @@ import '../styles.css';
 
 */
 
-
 // const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
 //const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+const dynamoDB = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
