@@ -364,21 +364,21 @@ def main():
 
     #Send all sensor data to ThingSpeak
     send_all(read_values)
-    print("-------------------------------") #DEBUG?
-    print("Data Sent to ThingSpeak:") #DEBUG?
+    print("-------------------------------")
+    print("Data Sent to ThingSpeak:")
     print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
     print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
     print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
     print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
     print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
     print(f"LED Hex Code: {read_values[led_field-1]}")
-    print("-------------------------------") #DEBUG?
+    print("-------------------------------")
 
     #Calculate main process runtime (DEBUGGING ONLY)
     runtime = time.time() - start_time
     print(f"Main process runtime: {runtime:.2f} seconds")
 
-    print("ESP32 disconnecting from wifi") #DEBUG?
+    print("ESP32 disconnecting from wifi") #DEBUG
     wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
     wlan.disconnect()  # Disconnect from Wi-Fi
     wlan.active(False)  # Disable the Wi-Fi interface
