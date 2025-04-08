@@ -2,11 +2,10 @@
 import React, { useState } from "react";
 import SearchBar from "../components/searchBar"; // Import the search bar component
 import { Button } from 'antd';
-//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 // ENTRIES NEED TO BE FORMATTED AS STRINGS?
-
 /*
 const dynamoDB = new DynamoDBClient({
   region: process.env.AWS_REGION,
