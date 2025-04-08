@@ -2,7 +2,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
