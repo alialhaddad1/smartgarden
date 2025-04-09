@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 
 // DynamoDB configuration
-export const dynamoDB = new DynamoDBClient({
+const dynamoDB = new DynamoDBClient({
   region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
