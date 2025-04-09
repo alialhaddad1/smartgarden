@@ -167,30 +167,25 @@ export default function MonitorPage() {
           setSelectedPlant(plant);
         }}
       >
-        <option value="">Select a plant</option>
-        {plants.length > 0 ? (
-          plants.map((plant) => (
-            <div key={plant.plantName} className="plant-card">
-              <h2>{plant.plantName}</h2>
-              <p>Moisture: {plant.moisture || "N/A"}</p>
-              <p>Sunlight: {plant.sunlight || "N/A"}</p>
-              <p>Temperature: {plant.temperature || "N/A"}</p>
-              <p>Humidity: {plant.humidity || "N/A"}</p>
-              <p>LED Status: {plant.led}</p>
-              <p>Battery: {plant.battery || "N/A"}</p>
-            </div>
-          ))
-        ) : (
-          <p>No plants available</p>
+        {selectedPlant && (
+          <div className="plant-card mt-4 border p-4 rounded shadow">
+            <h2 className="text-lg font-semibold">{selectedPlant.plantName}</h2>
+            <p>Moisture: {selectedPlant.moisture || "N/A"}</p>
+            <p>Sunlight: {selectedPlant.sunlight || "N/A"}</p>
+            <p>Temperature: {selectedPlant.temperature || "N/A"}</p>
+            <p>Humidity: {selectedPlant.humidity || "N/A"}</p>
+            <p>LED Status: {selectedPlant.led || "N/A"}</p>
+            <p>Battery: {selectedPlant.battery || "N/A"}</p>
+          </div>
         )}
-        {/*}
+        <option value="">Select a plant</option>
         {plants.map((plant) => (
           <option key={plant.plantName} value={plant.plantName}>
             {plant.plantName}
           </option>
         ))}
-        */}
       </select>
+
   
       {/* Show details of the selected plant */}
       {selectedPlant && (
