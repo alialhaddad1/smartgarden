@@ -2,7 +2,14 @@ import { NextResponse } from "next/server";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
 // Configure DynamoDB
-const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
+// DynamoDB configuration
+const dynamoDB = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function POST(req: Request) {
   try {

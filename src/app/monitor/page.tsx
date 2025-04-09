@@ -20,16 +20,6 @@ import '../styles.css';
 // const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
 //const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
-/*
-const dynamoDB = new DynamoDBClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-*/
-
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
   created_at: string;

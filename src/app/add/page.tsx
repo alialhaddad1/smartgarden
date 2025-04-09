@@ -5,16 +5,7 @@ import { Button } from 'antd';
 //import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
-// ENTRIES NEED TO BE FORMATTED AS STRINGS?
-/*
-const dynamoDB = new DynamoDBClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-*/
+// ENTRIES NEED TO BE FORMATTED AS STRINGS? 
 
 // const ESP32_IP = "192.168.1.100"; // Predefined ESP32 IP address
 // const UPDATE_INTERVAL = 10000; // 10 seconds
