@@ -24,6 +24,7 @@ export const GET = async () => {
       led: item.led?.S ?? "",
       battery: item.battery?.S ?? "",
     })) ?? [];    
+    console.log("Scanned items:", JSON.stringify(data.Items, null, 2));
     /*
     const plants = data.Items?.map((item) => ({
       plantName: item.plantName.S,
