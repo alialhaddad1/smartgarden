@@ -26,21 +26,24 @@ export default function AddPage() {
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
-  
+
+  try {
     const res = await fetch(`/api/search?q=${query}`);
-    const data: Plant[] = await res.json();
-  
-    if (data) {
-      // Convert both search query and plant names to lowercase for a case-insensitive search
-      const lowerQuery = query.toLowerCase();
-      const filteredData = data.filter((plant) =>
-        plant.plantName.S.toLowerCase().includes(lowerQuery)
-      );
-  
-      setResults(filteredData);
+    const result = await res.json();
+
+    if (Array.isArray(result)) {
+      const lower = query.toLowerCase();
+      setResults(result.filter(
+        (p) => p?.plantName?.S?.toLowerCase().includes(lower)
+      ));
     } else {
       setResults([]);
+      console.error("Unexpected search result:", result);
     }
+  } catch (err) {
+    console.error("Search error:", err);
+    setResults([]);
+  }
   };  
 
   // Function to add plant to plantData

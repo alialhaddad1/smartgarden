@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 
 // Configure DynamoDB
 const dynamoDB = new DynamoDBClient({
@@ -20,12 +20,15 @@ export async function GET(req: Request) {
 
   const params = {
     TableName: "speciesDatabase",
-    KeyConditionExpression: "plantName = :name",
-    ExpressionAttributeValues: { ":name": { S: query } },
+    FilterExpression: "contains(plantName, :query)",
+    ExpressionAttributeValues: {
+      ":query": { S: query },
+    },
   };
 
   try {
-    const data = await dynamoDB.send(new QueryCommand(params));
+    const command = new ScanCommand(params);
+    const data = await dynamoDB.send(command);
     return NextResponse.json(data.Items || []);
   } catch (error: unknown) {
     let errorMessage = "An unknown error occurred";
