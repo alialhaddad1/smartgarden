@@ -13,7 +13,6 @@ import '../styles.css';
   // Change needed = orange
   // Check updated values of battery from database to change to red
 2. Allow ESP32 to write to DynamoDB with update-plant
-3. IMPLEMENT AN "ARE YOU SURE?" CHECK TO THE PLANT REMOVAL BUTTON
 
 */
 
@@ -52,12 +51,15 @@ export default function MonitorPage() {
 
   // Remove plant function
   const removePlant = async (plantName: string) => {
+    const confirmed = window.confirm(`Are you sure you want to remove "${plantName}" from your collection?`);
+    if (!confirmed) return;
+  
     const res = await fetch("/api/remove-plants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plantName }),
     });
-
+  
     if (res.ok) {
       alert(`${plantName} removed from your collection.`);
       setPlants(plants.filter((plant) => plant.plantName !== plantName)); // Update UI
