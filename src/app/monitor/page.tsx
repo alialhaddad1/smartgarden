@@ -115,6 +115,7 @@ export default function MonitorPage() {
         setPlants([]); // Ensure plants is always an array
         return;
       }
+      setPlants(data);
     } catch (error) {
       console.error("Error fetching plants:", error);
       setPlants([]); // Prevents crashing by ensuring an empty array
