@@ -224,7 +224,15 @@ export default function MonitorPage() {
   );
 }
 
-// I will be updating the LED field with a special algorithm that I will ask you to make. The LED glows: - Green if there are no problems with the plant care
+/* 
+One of the fields in a plant, LED, will be updated by the ESP AND by logic from the web app. The web app will update the LED using the following logic in descending order of priority (meaning if multiple cases are activated, the one closest to the top should appear):
+
+  // If the entry ALREADY reads red, do not update it
+  // Change to plant needed = change the entry to orange 
+  // No change to plant needed = change the entry to green
+
+A "change needed" qualifies as if the statusThe ESP32 will send every other value to the table, so this is the only value you need to create updating logic for 
+*/
 
 /*export const fetchPlantStatus = async (): Promise<any[]> => {
   try {

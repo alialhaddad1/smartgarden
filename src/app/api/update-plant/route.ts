@@ -1,52 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
-// Create DynamoDB client
-const dynamo = new DynamoDBClient({
-  region: "us-east-2", // Change to your AWS region
-});
+const client = new DynamoDBClient({ region: "us-east-2" });
 
-// Handle ESP32 incoming JSON
-export async function POST(req: NextRequest) {
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).end("Method not allowed");
+  if (req.headers["x-api-key"] !== process.env.ESP_API_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { plantName, microMoisture, microSun, microTemp, microHumid, microLED, microBattery } = req.body;
+
+  if (!plantName) return res.status(400).json({ error: "Missing plantName" });
+
   try {
-    const { plantName, microMoisture, microSun, microTemp, microHumid, microLED, microBattery } = await req.json();
-
-    // Input validation
-    if (!plantName || !microMoisture || !microSun || !microTemp || !microHumid || !microLED || !microBattery) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    // Prepare Update Command for DynamoDB
-    const params = {
-      TableName: "speciesDatabase", // Your DynamoDB table name
-      Key: {
-        plantName: { S: plantName }, // Primary key
-      },
-      UpdateExpression:
-        "SET microMoisture = :moisture, microSun = :sun, microTemp = :temp, microHumid = :humidity, microLED = :led, microBattery = :battery",
+    const command = new UpdateItemCommand({
+      TableName: "YourTableName",
+      Key: { plantName: { S: plantName } },
+      UpdateExpression: "SET moisture = :m, sunlight = :s, temperature = :t, humidity = :h, led = :l, battery = :b",
       ExpressionAttributeValues: {
-        ":moisture": { S: microMoisture.toString() },
-        ":sun": { S: microSun.toString() },
-        ":temp": { S: microTemp.toString() },
-        ":humid": { S: microHumid.toString() },
-        ":led": { S: microLED.toString() },
-        ":battery": { S: microBattery.toString() },
+        ":m": { S: microMoisture },
+        ":s": { S: microSun },
+        ":t": { S: microTemp },
+        ":h": { S: microHumid },
+        ":l": { S: microLED },
+        ":b": { S: microBattery },
       },
-    };
-
-    // Send update command to DynamoDB
-    const command = new UpdateItemCommand(params);
-    await dynamo.send(command);
-
-    return NextResponse.json({ message: "Plant data updated successfully" });
-  } catch (error) {
-    console.error("Error updating plant data:", error);
-    return NextResponse.json(
-      { error: "Failed to update plant data" },
-      { status: 500 }
-    );
+    });
+    await client.send(command);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DynamoDB update failed" });
   }
 }
