@@ -203,8 +203,10 @@ export default function MonitorPage() {
       const statuses = await fetchPlantStatus();
       console.log("Plant statuses:", setPlants); // This makes it “used”
       console.log("Plant statuses:", plantStatuses);
+      console.log("Plant statuses:", statuses);
       // Optionally store it later if needed
     };
+
     loadStatus();
 
     fetchThingSpeakData();
