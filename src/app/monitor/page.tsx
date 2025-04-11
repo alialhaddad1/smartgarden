@@ -2,22 +2,25 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
-
 1. Implement LED light change algorithm; you write this value to the database
   // Low battery = red
   // No change needed = green
   // Change needed = orange
   // Check updated values of battery from database to change to red
-2. Allow ESP32 to write to DynamoDB with update-plant
-
 */
 
-// const dynamoDB = new DynamoDBClient({ region: "us-east-2" });
-//const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const dynamoDB = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
@@ -43,9 +46,18 @@ type Plant = {
   battery: string;
 };
 
+type PlantStatus = {
+  plantName: string;
+  status: {
+    status: string;
+    message?: string;
+  }[];
+};
+
 export default function MonitorPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [plantStatuses, setPlantStatuses] = useState<PlantStatus[]>([]);
   const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
   const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2" }];
 
@@ -124,21 +136,86 @@ export default function MonitorPage() {
     }
   };
 
-  // Fetch plants from the API
+  const fetchPlantStatus = async (): Promise<PlantStatus[]> => {
+    try {
+      const command = new ScanCommand({ TableName: "plantData" });
+      const data = await dynamoDB.send(command);
+  
+      return (
+        data.Items?.map((rawPlant) => {
+          const plant = unmarshall(rawPlant);
+  
+          const moistureMin = Number(plant.moisture) * 0.85;
+          const moistureMax = Number(plant.moisture) * 1.15;
+          const sunlightMin = Number(plant.sunlight) * 0.85;
+          const sunlightMax = Number(plant.sunlight) * 1.15;
+          const tempRange = plant.temperature?.split("-").map(Number) || [];
+          const humidityMin = Number(plant.humidity) * 0.85;
+          const humidityMax = Number(plant.humidity) * 1.15;
+          const batteryMin = 20;
+  
+          const statuses: { status: string; message?: string }[] = [];
+  
+          if (plant.microMoisture < moistureMin)
+            statuses.push({ status: "too little moisture", message: plant.shortageMoisture });
+          if (plant.microMoisture > moistureMax)
+            statuses.push({ status: "too much moisture", message: plant.surplusMoisture });
+  
+          if (plant.microSun < sunlightMin)
+            statuses.push({ status: "too little sunlight", message: plant.shortageSun });
+          if (plant.microSun > sunlightMax)
+            statuses.push({ status: "too much sunlight", message: plant.surplusSun });
+  
+          if (tempRange.length === 2) {
+            if (plant.microTemp < tempRange[0])
+              statuses.push({ status: "too cold", message: plant.shortageTemp });
+            if (plant.microTemp > tempRange[1])
+              statuses.push({ status: "too hot", message: plant.surplusTemp });
+          }
+  
+          if (plant.microHumid < humidityMin)
+            statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
+          if (plant.microHumid > humidityMax)
+            statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
+  
+          if (plant.microBattery < batteryMin)
+            statuses.push({ status: "battery low", message: "Recharge or replace battery" });
+  
+          if (plant.microLED)
+            statuses.push({ status: `LED status: ${plant.microLED}` });
+  
+          return {
+            plantName: plant.plantName,
+            status: statuses.length
+              ? statuses
+              : [{ status: "looking good", message: "Everything is fine" }],
+          };
+        }) || []
+      );
+    } catch (error) {
+      console.error("Error fetching plant status:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {    
     fetchThingSpeakData();
 
     fetchPlants();
 
+    fetchPlantStatus().then(setPlantStatuses);
+
     // Poll every X seconds to get real-time updates
     const interval_1 = setInterval(fetchThingSpeakData, 10000);
     const interval_2 = setInterval(fetchPlants, 5000);
+    const interval_3 = setInterval(fetchPlantStatus, 10000);
     return () => {
       clearInterval(interval_1);
       clearInterval(interval_2);
+      clearInterval(interval_3);
     }; 
   }, []);
-
+  
   return (
     <div className="p-4">
       <h1 className="ant-typography">Your Plants</h1>
@@ -223,129 +300,3 @@ export default function MonitorPage() {
     </div>
   );
 }
-
-/* 
-One of the fields in a plant, LED, will be updated by the ESP AND by logic from the web app. The web app will update the LED using the following logic in descending order of priority (meaning if multiple cases are activated, the one closest to the top should appear):
-
-  // If the entry ALREADY reads red, do not update it
-  // Change to plant needed = change the entry to orange 
-  // No change to plant needed = change the entry to green
-
-A "change needed" qualifies as if the statusThe ESP32 will send every other value to the table, so this is the only value you need to create updating logic for 
-*/
-
-/*export const fetchPlantStatus = async (): Promise<any[]> => {
-  try {
-    const plantDataParams = {
-      TableName: "plantData",
-    };
-
-    // Fetch all plant data from plantData table
-    const plantDataCommand = new ScanCommand(plantDataParams);
-    const plantData = await dynamoDB.send(plantDataCommand);
-
-    return (
-      plantData.Items?.map((plant) => {
-        const moistureMin = Number(plant.moisture?.S) * 0.85;
-        const moistureMax = Number(plant.moisture?.S) * 1.15;
-        const sunlightMin = Number(plant.sunlight?.S) * 0.85;
-        const sunlightMax = Number(plant.sunlight?.S) * 1.15;
-        const tempRange = plant.temperature?.S.split("-").map(Number) || [];
-        const humidityMin = 30; // Minimum humidity threshold (adjustable)
-        const humidityMax = 70; // Maximum humidity threshold (adjustable)
-        const batteryMin = 20; // Minimum battery percentage to alert
-
-        const statuses = [];
-
-        // Check moisture
-        const microMoisture = Number(plant.microMoisture?.S);
-        if (microMoisture < moistureMin)
-          statuses.push({ status: "too little moisture", message: plant.shortageMoisture?.S });
-        if (microMoisture > moistureMax)
-          statuses.push({ status: "too much moisture", message: plant.surplusMoisture?.S });
-
-        // Check sunlight
-        const microSun = Number(plant.microSun?.S);
-        if (microSun < sunlightMin)
-          statuses.push({ status: "too little sunlight", message: plant.shortageSun?.S });
-        if (microSun > sunlightMax)
-          statuses.push({ status: "too much sunlight", message: plant.surplusSun?.S });
-
-        // Check temperature
-        const microTemp = Number(plant.microTemp?.S);
-        if (tempRange.length === 2) {
-          if (microTemp < tempRange[0])
-            statuses.push({ status: "too cold", message: plant.shortageTemp?.S });
-          if (microTemp > tempRange[1])
-            statuses.push({ status: "too hot", message: plant.surplusTemp?.S });
-        }
-
-        // Check humidity
-        const microHumid = Number(plant.microHumid?.S);
-        if (microHumid < humidityMin)
-          statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
-        if (microHumid > humidityMax)
-          statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
-
-        // Check battery
-        const microBattery = Number(plant.microBattery?.S);
-        if (microBattery < batteryMin)
-          statuses.push({ status: "battery low", message: "Recharge or replace battery" });
-
-        // LED status check (optional, no thresholds but can display status)
-        const microLED = plant.microLED?.S;
-        if (microLED) statuses.push({ status: `LED status: ${microLED}` });
-
-        return {
-          plantName: plant.plantName.S,
-          status: statuses.length ? statuses : [{ status: "looking good", message: "Everything is fine" }],
-        };
-      }) || []
-    );
-  } catch (error) {
-    console.error("Error fetching plant status:", error);
-    return [];
-  }
-};
-*/
-
-
-
-/*// Function to fetch sensor data from ESP32 and update the plantData table
-const fetchAndUpdateSensorData = async (plantName) => {
-    try {
-        const response = await fetch(`http://${ESP32_IP}/sensor-data`);
-        if (!response.ok) throw new Error("Failed to fetch sensor data");
-        
-        const { microSun, microTemp, microMoisture } = await response.json();
-        
-        const updatePayload = {
-            plantName: { S: plantName },
-            microSun: { N: microSun.toString() },
-            microTemp: { N: microTemp.toString() },
-            microMoisture: { N: microMoisture.toString() },
-        };
-        
-        const updateRes = await fetch("/api/update-plant", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatePayload),
-        });
-        
-        if (!updateRes.ok) throw new Error("Failed to update plant data");
-        console.log("Plant data updated successfully");
-    } catch (error) {
-        console.error("Error updating sensor data:", error);
-    }
-};
-
-export const useESP32Data = (plantName) => {
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchAndUpdateSensorData(plantName);
-        }, UPDATE_INTERVAL);
-        
-        return () => clearInterval(interval);
-    }, [plantName]);
-};
-*/
