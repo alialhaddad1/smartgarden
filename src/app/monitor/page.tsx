@@ -199,6 +199,14 @@ export default function MonitorPage() {
   };
 
   useEffect(() => {    
+    const loadStatus = async () => {
+      const statuses = await fetchPlantStatus();
+      console.log("Plant statuses:", setPlants); // This makes it “used”
+      console.log("Plant statuses:", plantStatuses);
+      // Optionally store it later if needed
+    };
+    loadStatus();
+
     fetchThingSpeakData();
 
     //fetchPlants();
