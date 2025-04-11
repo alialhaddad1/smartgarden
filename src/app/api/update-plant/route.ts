@@ -1,16 +1,19 @@
+import { NextRequest, NextResponse } from "next/server";
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 const client = new DynamoDBClient({ region: "us-east-2" });
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).end("Method not allowed");
-  if (req.headers["x-api-key"] !== process.env.ESP_API_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
+export const POST = async (req: NextRequest) => {
+  if (req.headers.get("x-api-key") !== process.env.ESP_API_KEY) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { plantName, microMoisture, microSun, microTemp, microHumid, microLED, microBattery } = req.body;
+  const body = await req.json();
+  const { plantName, microMoisture, microSun, microTemp, microHumid, microLED, microBattery } = body;
 
-  if (!plantName) return res.status(400).json({ error: "Missing plantName" });
+  if (!plantName) {
+    return NextResponse.json({ error: "Missing plantName" }, { status: 400 });
+  }
 
   try {
     const command = new UpdateItemCommand({
@@ -26,10 +29,11 @@ export default async function handler(req, res) {
         ":b": { S: microBattery },
       },
     });
+
     await client.send(command);
-    res.status(200).json({ success: true });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "DynamoDB update failed" });
+    return NextResponse.json({ error: "DynamoDB update failed" }, { status: 500 });
   }
-}
+};
