@@ -119,7 +119,7 @@ export default function MonitorPage() {
       console.error("Error fetching ThingSpeak data:", error);
     }
   };
-  /*
+  
   const fetchPlants = async () => {
     try {
       const res = await fetch("/api/get-plants");
@@ -135,7 +135,7 @@ export default function MonitorPage() {
       setPlants([]); // Prevents crashing by ensuring an empty array
     }
   };
-  */
+  /*
   const fetchPlantStatus = async (): Promise<PlantStatus[]> => {
     try {
       const command = new ScanCommand({ TableName: "plantData" });
@@ -197,13 +197,13 @@ export default function MonitorPage() {
       return [];
     }
   };
-
+  */
   useEffect(() => {    
     const loadStatus = async () => {
-      const statuses = await fetchPlantStatus();
+      //const statuses = await fetchPlantStatus();
       console.log("Plant statuses:", setPlants); // This makes it “used”
       console.log("Plant statuses:", plantStatuses);
-      console.log("Plant statuses:", statuses);
+      //console.log("Plant statuses:", statuses);
       // Optionally store it later if needed
     };
 
@@ -213,16 +213,16 @@ export default function MonitorPage() {
 
     //fetchPlants();
 
-    fetchPlantStatus().then(setPlantStatuses);
+    //fetchPlantStatus().then(setPlantStatuses);
 
     // Poll every X seconds to get real-time updates
     const interval_1 = setInterval(fetchThingSpeakData, 10000);
-    //const interval_2 = setInterval(fetchPlants, 5000);
-    const interval_3 = setInterval(fetchPlantStatus, 10000);
+    const interval_2 = setInterval(fetchPlants, 5000);
+    //const interval_3 = setInterval(fetchPlantStatus, 10000);
     return () => {
       clearInterval(interval_1);
-      //clearInterval(interval_2);
-      clearInterval(interval_3);
+      clearInterval(interval_2);
+      //clearInterval(interval_3);
     }; 
   }, []);
   
