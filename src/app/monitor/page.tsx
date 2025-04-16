@@ -2,8 +2,8 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+//import { unmarshall } from "@aws-sdk/util-dynamodb";
+//import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
@@ -13,7 +13,7 @@ import '../styles.css';
   // Change needed = orange
   // Check updated values of battery from database to change to red
 */
-
+/*
 const dynamoDB = new DynamoDBClient({
   region: "us-east-2",
   credentials: {
@@ -21,7 +21,7 @@ const dynamoDB = new DynamoDBClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
-
+*/
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
   created_at: string;
@@ -203,6 +203,7 @@ export default function MonitorPage() {
       //const statuses = await fetchPlantStatus();
       console.log("Plant statuses:", setPlants); // This makes it “used”
       console.log("Plant statuses:", plantStatuses);
+      console.log("Plant statuses:", setPlantStatuses);
       //console.log("Plant statuses:", statuses);
       // Optionally store it later if needed
     };
