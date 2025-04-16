@@ -25,39 +25,64 @@ def wifi_connect():
     return
 
 ########################################################################################
-# Function to send data to ThingSpeak
-def send_all(all_field_data):
-    global max_attempts
-    global temperature_field, moisture_field, light_field, led_field, humidity_field, soc_field
-    temp = all_field_data[temperature_field-1]
-    moisture = all_field_data[moisture_field-1]
-    light = all_field_data[light_field-1]
-    led = all_field_data[led_field-1]
-    humidity = all_field_data[humidity_field-1]
-    soc = all_field_data[soc_field-1]
-# with threadlock:
-    for attempt in range(max_attempts):
+import urequests
+import ujson
+# import time
+
+# ----------------------------------------------------------------------
+# CONFIG – fill these with your actual values once, then forget them here
+API_URL   = "https://smartgarden.vercel.app/api/update"  # full HTTPS endpoint
+API_KEY   = "cb9e9bc88da7b9c97eee595a4bab04ef6a8709cd97f5f573d9509c375ac58267"                # process_env_api key
+# ----------------------------------------------------------------------
+
+def send_plant_data(plant_name: str,
+                    moisture: int,
+                    sunlight: int,
+                    temperature: float,
+                    humidity: int,
+                    led_state: str,
+                    battery_mv: int,
+                    *,
+                    retry: int = 3,
+                    timeout: int = 6000) -> bool:
+    """
+    Push one telemetry snapshot to your web‑app middleware.
+
+    Returns True on success, False if the POST fails after 'retry' attempts.
+    """
+    payload = {
+        "plantName":   plant_name,
+        "moisture":    moisture,        # raw ADC or % – your choice
+        "sunlight":    sunlight,        # lux or raw reading
+        "temperature": temperature,     # °C
+        "humidity":    humidity,        # %
+        "led":         led_state,       # e.g. "ON", "OFF", "AUTO"
+        "battery":     battery_mv       # mV or %, whichever you log
+    }
+
+    headers = {
+        "Content-Type":  "application/json",
+        "x-api-key":     API_KEY        # use whatever header your API expects
+    }
+
+    for attempt in range(1, retry + 1):
         try:
-            print(f"Sending all sensor data to ThingSpeak")
-            url = "placeholder"
-            '''
-            For DynamoDB integration, we will access the web app as a pseudo-API to send and read data
-            The url variable will be the api base url (web app url) and concatenate the endpoint and attach
-            json data payload.
-            '''
-            # url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
-            response = urequests.get(url)
-            response.close()
-            print("Data sent successfully") #DEBUG?
-            return
-        except Exception as e:
-            print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
-            print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-            if attempt < max_attempts:  # Wait before retrying
-                time.sleep(5)
-            else:
-                print("All attempts to update sensor data failed. Exiting...")
-                return
+            resp = urequests.post(API_URL,
+                                  data=ujson.dumps(payload),
+                                  headers=headers,
+                                  timeout=timeout)
+            ok = resp.status_code == 200
+            resp.close()
+            if ok:
+                return True
+        except Exception as exc:
+            # Optional: print or log exc for diagnostics
+            pass
+
+        time.sleep_ms(500)  # brief back‑off before next try
+
+    return False
+
 ########################################################################################
 #MAIN PROCESS
 
@@ -73,7 +98,13 @@ while count < numPoints:
     curr_data = 6*[0] #initialize data array
     curr_data[temperature_field-1] = curr_data[moisture_field-1] = curr_data[light_field-1] = curr_data[humidity_field-1] = curr_data[soc_field-1] = 50
     curr_data[led_field-1] = "FF00FF" #manually set LED color
-    send_all(curr_data)
+    send_plant_data(plant_name="Rosemary", 
+                    moisture=curr_data[moisture_field-1],
+                    sunlight=curr_data[light_field-1],
+                    temperature=curr_data[temperature_field-1],
+                    humidity=curr_data[humidity_field-1],
+                    led_state=curr_data[led_field-1],
+                    battery_mv=curr_data[soc_field-1])
     if count < numPoints-1:
         print("Waiting for 15 seconds before sending next data point...")
         time.sleep(30) #ThingSpeak free plan limits to 15 seconds between updates, wait 30 seconds to be safe
