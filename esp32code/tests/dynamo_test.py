@@ -8,6 +8,8 @@ light_field = 3
 led_field = 4
 humidity_field = 5
 soc_field = 6
+ssid = 'iPhoneCS'
+password = 'password408'
 
 #Connect to WiFi
 def wifi_connect():
@@ -36,12 +38,12 @@ API_KEY   = "cb9e9bc88da7b9c97eee595a4bab04ef6a8709cd97f5f573d9509c375ac58267"  
 # ----------------------------------------------------------------------
 
 def send_plant_data(plant_name: str,
-                    moisture: int,
-                    sunlight: int,
-                    temperature: float,
-                    humidity: int,
+                    moisture: str,
+                    sunlight: str,
+                    temperature: str,
+                    humidity: str,
                     led_state: str,
-                    battery_mv: int,
+                    battery_mv: str,
                     *,
                     retry: int = 3,
                     timeout: int = 6000) -> bool:
@@ -51,13 +53,13 @@ def send_plant_data(plant_name: str,
     Returns True on success, False if the POST fails after 'retry' attempts.
     """
     payload = {
-        "plantName":   plant_name,
-        "moisture":    moisture,        # raw ADC or % – your choice
-        "sunlight":    sunlight,        # lux or raw reading
-        "temperature": temperature,     # °C
-        "humidity":    humidity,        # %
-        "led":         led_state,       # e.g. "ON", "OFF", "AUTO"
-        "battery":     battery_mv       # mV or %, whichever you log
+        "plantName": plant_name,
+        "microMoisture": str(moisture),
+        "microSun": str(sunlight),
+        "microTemp": str(temperature),
+        "microHumid": str(humidity),
+        "microLED": led_state,           # Already a string
+        "microBattery": str(battery_mv)
     }
 
     headers = {
@@ -72,6 +74,8 @@ def send_plant_data(plant_name: str,
                                   headers=headers,
                                   timeout=timeout)
             ok = resp.status_code == 200
+            print("Response:", resp.status_code)
+            print("Response JSON:", resp.json())
             resp.close()
             if ok:
                 return True
@@ -90,7 +94,8 @@ def send_plant_data(plant_name: str,
 wifi_connect()
 # Get number of test data points to send
 numPoints = input("Please enter how many data points you would like to send: ")
-numPoints = int(numPoints)
+# numPoints = int(numPoints)
+numPoints = 1
 # Loop to send data
 count = 0
 while count < numPoints:
@@ -98,13 +103,18 @@ while count < numPoints:
     curr_data = 6*[0] #initialize data array
     curr_data[temperature_field-1] = curr_data[moisture_field-1] = curr_data[light_field-1] = curr_data[humidity_field-1] = curr_data[soc_field-1] = 50
     curr_data[led_field-1] = "FF00FF" #manually set LED color
-    send_plant_data(plant_name="Rosemary", 
-                    moisture=curr_data[moisture_field-1],
-                    sunlight=curr_data[light_field-1],
-                    temperature=curr_data[temperature_field-1],
-                    humidity=curr_data[humidity_field-1],
-                    led_state=curr_data[led_field-1],
-                    battery_mv=curr_data[soc_field-1])
+    print("Current Data: ", curr_data)
+    check = send_plant_data(plant_name="Rosemary", 
+                    moisture=str(curr_data[moisture_field-1]),
+                    sunlight=str(curr_data[light_field-1]),
+                    temperature=str(curr_data[temperature_field-1]),
+                    humidity=str(curr_data[humidity_field-1]),
+                    led_state=str(curr_data[led_field-1]),
+                    battery_mv=str(curr_data[soc_field-1]))
+    if check:
+        print("Data sent successfully!")
+    else:
+        print("Failed to send data after 3 attempts.")
     if count < numPoints-1:
         print("Waiting for 15 seconds before sending next data point...")
         time.sleep(30) #ThingSpeak free plan limits to 15 seconds between updates, wait 30 seconds to be safe
