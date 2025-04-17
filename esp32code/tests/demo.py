@@ -220,7 +220,7 @@ def send_all(all_field_data):
         except Exception as e:
             print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-            if attempt < max_attempts:  # Wait before retrying
+            if attempt < max_attempts-1:  # Wait before retrying
                 time.sleep(5)
             else:
                 print("All attempts to update sensor data failed. Exiting...")
@@ -305,6 +305,9 @@ def main():
     if not wifi_connect():
         # print("ESP32 going to sleep...") #DEBUG?
         set_color(0,0,0) #DEBUG
+        wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
+        wlan.disconnect()  # Disconnect from Wi-Fi
+        wlan.active(False)  # Disable the Wi-Fi interface
         time.sleep(5) #DEBUG -> sometimes esp goes to sleep before LED updates
         sleep_handler(sleep_time) #DEBUG?
         return

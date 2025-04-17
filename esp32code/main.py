@@ -53,11 +53,11 @@ class MAX17048:
 # GLOBAL VARIABLES
 
 # Sleep Time (in minutes)
-sleep_time = 0.5
+sleep_time = 1
 
 # Max Attempts/Timeouts
 max_attempts = 3 #number of attempts to make urequest to ThingSpeak
-max_timeout = 15 #time to wait for wifi connection (in seconds)
+max_timeout = 60 #time to wait for wifi connection (in seconds)
 
 # Battery Low Charge Threshold
 low_soc = 20 #percentage
@@ -183,7 +183,6 @@ def wifi_connect():
     global ssid, password, max_timeout
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-
     if wlan.isconnected():
         print('Already connected to', ssid)
         print('IP Address:', wlan.ifconfig()[0])
@@ -191,11 +190,10 @@ def wifi_connect():
 
     print('Connecting to network...')
     wlan.connect(ssid, password)
-
     start_time = time.time()
     while not wlan.isconnected() and (time.time() - start_time) < max_timeout:
-        print("Waiting for connection...")
-        time.sleep(3)
+        print(f"Waiting for connection for {(max_timeout - (time.time()-start_time))} more seconds before timeout")
+        time.sleep(10)
 
     if wlan.isconnected():
         print('Connected to wifi successfully!')
@@ -222,15 +220,15 @@ def send_all(all_field_data):
             response = urequests.get(url)
             response.close()
             print("Data sent successfully") #DEBUG?
-            return
+            return True
         except Exception as e:
-            print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
+            # print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-            if attempt < max_attempts:  # Wait before retrying
+            if attempt < max_attempts-1:  # Wait before retrying
                 time.sleep(5)
             else:
                 print("All attempts to update sensor data failed. Exiting...")
-                return
+                return False
 
 # Function to receive all data from ThingSpeak       
 def receive_all():
@@ -242,6 +240,7 @@ def receive_all():
     def_rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
     for attempt in range(max_attempts):
         try:
+            # url = "fakeurl" #DEBUG
             url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
             response = urequests.get(url)
             data = response.json()
@@ -265,9 +264,9 @@ def receive_all():
             # print(f"Data received: {recent_value.strip().upper()}") #debug
             # return recent_value.strip().upper()
         except Exception as e:
-            print(f"Error reading all data from ThingSpeak Channel: {e}") #DEBUG
+            # print(f"Error reading all data from ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
-            if attempt < max_attempts:  # Wait before retrying
+            if attempt < max_attempts-1:  # Wait before retrying
                 time.sleep(5)
             else:
                 print("All attempts to receive ThingSpeak data failed.")
@@ -292,6 +291,29 @@ def set_color(r, g, b):
     return
 
 ################################################################################
+# DEBUGGING FUNCTIONS
+#Get Date/Time from NTP
+import ntptime
+from machine import RTC
+def get_time():
+    ntptime.host = 'pool.ntp.org'
+    numAttempts = 5
+    attemptCount = 1
+    while attemptCount <= numAttempts:
+        try :
+            ntptime.settime()
+            rtc = RTC()
+            year, month, day, weekday, hour, minute, second, microsecond = rtc.datetime()
+            hour = hour - 4
+            rtc.datetime((year, month, day, weekday, hour, minute, second, microsecond))
+            return
+        except Exception as e:
+            print("Failed to get time on attempt", attemptCount)
+            print("Retrying...")
+            attemptCount += 1
+    print("Failed to retrieve time after maximum attempts =", numAttempts)
+    return
+################################################################################
 # MAIN PROGRAM FUNCTIONS
 
 # Main function to run the program with multi-threading on the branches
@@ -300,32 +322,50 @@ def main():
     global temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
 
     #Record main process start time (DEBUGGING ONLY)
-    start_time = time.time()
+    # start_time = time.time()
 
     #Connect to Wi-Fi
     if not wifi_connect():
         # print("ESP32 going to sleep...") #DEBUG?
         set_color(0,0,0) #DEBUG
+        wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
+        wlan.disconnect()  # Disconnect from Wi-Fi
+        wlan.active(False)  # Disable the Wi-Fi interface
         time.sleep(5) #DEBUG -> sometimes esp goes to sleep before LED updates
         sleep_handler(sleep_time) #DEBUG?
         return
+    start_time = time.time()
+    get_time()
+    rtc = RTC()
+    year, month, day, weekday, hour, minute, second, microsecond = rtc.datetime()
+    startminute = minute
+    startsecond = second + microsecond/1000000
+    print("-------------------------------") #DEBUG?
+    hour_12 = hour % 12
+    hour_12 = 12 if hour_12 == 0 else hour_12  # 0 -> 12
+    am_pm = "AM" if hour < 12 else "PM"
+    print(f"ESP32 woke up and connected to wifi at {hour_12:02}:{minute:02}:{second:02} {am_pm}, {month}/{day}/25") #DEBUG
     
     #Read all recent data from ThingSpeak
     recent_list = receive_all()
-    print("-------------------------------") #DEBUG?
-    print("Recent Data from ThingSpeak:") #DEBUG?
-    print("Soil Moisture: {:.2f}%".format(float(recent_list[moisture_field-1])))
-    print("Temperature: {:.2f} deg F".format(float(recent_list[temperature_field-1])))
-    print("Humidity: {:.2f}%".format(float(recent_list[humidity_field-1])))
-    print("Light: {:.2f} lux".format(float(recent_list[light_field-1])))
-    print("SOC: {:.2f}%".format(float(recent_list[soc_field-1])))
-    print(f"LED Hex Code: {recent_list[led_field-1]}")
+    # print("-------------------------------") #DEBUG?
+    # print("Recent Data from ThingSpeak:") #DEBUG?
+    # print("Soil Moisture: {:.2f}%".format(float(recent_list[moisture_field-1])))
+    # print("Temperature: {:.2f} deg F".format(float(recent_list[temperature_field-1])))
+    # print("Humidity: {:.2f}%".format(float(recent_list[humidity_field-1])))
+    # print("Light: {:.2f} lux".format(float(recent_list[light_field-1])))
+    # print("SOC: {:.2f}%".format(float(recent_list[soc_field-1])))
+    # print(f"LED Hex Code: {recent_list[led_field-1]}")
 
     #Read all sensors
-    print("-------------------------------") #DEBUG?
-    print("Reading all sensors...") #DEBUG?
+    # print("-------------------------------") #DEBUG?
+    # print("Reading all sensors...") #DEBUG?
     read_values = read_all()
-    print("Sensor Read Values:") #DEBUG?
+    print("-------------------------------") #DEBUG?
+    year, month, day, weekday, hour, minute, second, microsecond = rtc.datetime()
+    second = second + microsecond/1000000
+    print(f"Sensors read at {hour_12:02}:{minute:02}:{int(second):02} {am_pm}, or {second-startsecond:.2f} seconds after wifi connect") #DEBUG
+    # print("Sensor Read Values:") #DEBUG?
     print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
     print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
     print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
@@ -352,6 +392,10 @@ def main():
         hexcode = read_values[led_field-1]
         (red, green, blue) = hex_to_rgb(hexcode)
         set_color(red, green, blue)
+    print("-------------------------------") #DEBUG?
+    year, month, day, weekday, hour, minute, second, microsecond = rtc.datetime()
+    second = second + microsecond/1000000
+    print(f"LED updated at {hour_12:02}:{minute:02}:{int(second):02} {am_pm}, or {second-startsecond:.2f} seconds after wifi connect") #DEBUG
     print(f"LED color set to: {read_values[led_field-1]}") #DEBUG
     #Filter sensor data
     for i in range(len(read_values)):
@@ -359,22 +403,27 @@ def main():
             read_values[i] = recent_list[i]
 
     #Send all sensor data to ThingSpeak
+    print("-------------------------------") #DEBUG?
     send_all(read_values)
+    year, month, day, weekday, hour, minute, second, microsecond = rtc.datetime()
+    second = second + microsecond/1000000
+    print(f"Data sent at {hour_12:02}:{minute:02}:{int(second):02} {am_pm}, or {second-startsecond:.2f} seconds after wifi connect") #DEBUG
     print("-------------------------------") #DEBUG?
-    print("Data Sent to ThingSpeak:") #DEBUG?
-    print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
-    print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
-    print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
-    print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
-    print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
-    print(f"LED Hex Code: {read_values[led_field-1]}")
-    print("-------------------------------") #DEBUG?
+    # print("-------------------------------") #DEBUG?
+    # print("Data Sent to ThingSpeak:") #DEBUG?
+    # print("Soil Moisture: {:.2f}%".format(float(read_values[moisture_field-1])))
+    # print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])))
+    # print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
+    # print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
+    # print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
+    # print(f"LED Hex Code: {read_values[led_field-1]}")
+    # print("-------------------------------") #DEBUG?
 
     #Calculate main process runtime (DEBUGGING ONLY)
-    runtime = time.time() - start_time
-    print(f"Main process runtime: {runtime:.2f} seconds")
+    # runtime = time.time() - start_time
+    # print(f"Main process runtime: {runtime:.2f} seconds")
 
-    print("ESP32 disconnecting from wifi") #DEBUG
+    # print("ESP32 disconnecting from wifi") #DEBUG
     wlan = network.WLAN(network.STA_IF)  # Get the Wi-Fi interface 
     wlan.disconnect()  # Disconnect from Wi-Fi
     wlan.active(False)  # Disable the Wi-Fi interface
@@ -386,6 +435,7 @@ def main():
 esp32.wake_on_ext0(pin = Pin(25, Pin.IN, Pin.PULL_DOWN), level = esp32.WAKEUP_ANY_HIGH) #DEBUG
 
 main()
-print("main() has finished executing") #DEBUG
+# print("main() has finished executing") #DEBUG
+main()
 set_color(0,0,0) #DEBUG
-machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
+# machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
