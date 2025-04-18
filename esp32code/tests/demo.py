@@ -69,8 +69,8 @@ max_timeout = 15 #time to wait for wifi connection (in seconds)
 low_soc = 20 #percentage
 
 #Soil Moisture Sensor Calibration
-cal_max = 435 #sensor value read with sensor submerged in water
-cal_min = 300 #sensor value read with sensor in dry air
+cal_max = 420 #sensor value read with sensor submerged in water
+cal_min = 335 #sensor value read with sensor in dry air
 
 # Wi-Fi Credentials
 ssid = 'iPhoneCS'
