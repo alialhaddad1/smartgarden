@@ -46,12 +46,9 @@ type Plant = {
   battery: string;
 };
 
-type PlantStatus = {
+interface PlantStatus {
   plantName: string;
-  status: {
-    status: string;
-    message?: string;
-  }[];
+  status: { status: string; message?: string }[];
 };
 
 export default function MonitorPage() {
@@ -154,31 +151,37 @@ export default function MonitorPage() {
           const humidityMax = Number(plant.humidity) * 1.15;
           const batteryMin = 20;
   
+          const microMoisture = Number(plant.microMoisture);
+          const microSun = Number(plant.microSun);
+          const microTemp = Number(plant.microTemp);
+          const microHumid = Number(plant.microHumid);
+          const microBattery = Number(plant.microBattery);
+  
           const statuses: { status: string; message?: string }[] = [];
   
-          if (plant.microMoisture < moistureMin)
+          if (microMoisture < moistureMin)
             statuses.push({ status: "too little moisture", message: plant.shortageMoisture });
-          if (plant.microMoisture > moistureMax)
+          if (microMoisture > moistureMax)
             statuses.push({ status: "too much moisture", message: plant.surplusMoisture });
   
-          if (plant.microSun < sunlightMin)
+          if (microSun < sunlightMin)
             statuses.push({ status: "too little sunlight", message: plant.shortageSun });
-          if (plant.microSun > sunlightMax)
+          if (microSun > sunlightMax)
             statuses.push({ status: "too much sunlight", message: plant.surplusSun });
   
           if (tempRange.length === 2) {
-            if (plant.microTemp < tempRange[0])
+            if (microTemp < tempRange[0])
               statuses.push({ status: "too cold", message: plant.shortageTemp });
-            if (plant.microTemp > tempRange[1])
+            if (microTemp > tempRange[1])
               statuses.push({ status: "too hot", message: plant.surplusTemp });
           }
   
-          if (plant.microHumid < humidityMin)
+          if (microHumid < humidityMin)
             statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
-          if (plant.microHumid > humidityMax)
+          if (microHumid > humidityMax)
             statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
   
-          if (plant.microBattery < batteryMin)
+          if (microBattery < batteryMin)
             statuses.push({ status: "battery low", message: "Recharge or replace battery" });
   
           if (plant.microLED)
