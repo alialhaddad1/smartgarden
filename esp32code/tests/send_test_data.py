@@ -104,7 +104,8 @@ def send_all(all_field_data):
     for attempt in range(max_attempts):
         try:
             print(f"Sending all sensor data to ThingSpeak")
-            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
+            url = f"fakeurl"
+            #url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
             response = urequests.get(url)
             response.close()
             print("Data sent successfully") #DEBUG?
