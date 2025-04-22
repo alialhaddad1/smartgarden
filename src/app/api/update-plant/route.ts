@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
-const client = new DynamoDBClient({ region: "us-east-2" });
+const dynamoDB = new DynamoDBClient({
+  region: "us-east-2",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export const POST = async (req: NextRequest) => {
   if (req.headers.get("x-api-key") !== process.env.ESP_API_KEY) {
@@ -30,7 +36,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    await client.send(command);
+    await dynamoDB.send(command);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     console.error(err);
