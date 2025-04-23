@@ -125,7 +125,7 @@ export default function MonitorPage() {
       console.error("Error fetching ThingSpeak data:", error);
     }
   };
-  /*
+  
   const fetchPlants = async () => {
     try {
       const res = await fetch("/api/get-plants");
@@ -141,7 +141,7 @@ export default function MonitorPage() {
       setPlants([]); // Prevents crashing by ensuring an empty array
     }
   };
-  */
+  
   const fetchPlantStatus = async () => {
     const res = await fetch("/api/get-plant-status");
     return res.json();
@@ -150,17 +150,15 @@ export default function MonitorPage() {
   useEffect(() => {
     const loadStatus = async () => {
       const statuses = await fetchPlantStatus();
+      setPlantStatuses(statuses.result); 
       console.log("Plant statuses:", setPlants); // This makes it “used”
       console.log("Plant statuses:", plantStatuses);
       console.log("Plant statuses:", setPlantStatuses);
       console.log("Plant statuses:", statuses);
-      // Optionally store it later if needed
     };
-
-    loadStatus();
   
-    fetchPlantStatus();
-
+    fetchPlants(); 
+    loadStatus();
     fetchThingSpeakData();
   
     const interval_1 = setInterval(fetchThingSpeakData, 10000);
@@ -202,7 +200,7 @@ export default function MonitorPage() {
             try {
               const res = await fetch("/api/get-plant-status");
               const data = await res.json();
-              const match = (data.result as PlantStatus[]).find((p) => p.plantName === plant.plantName);
+              const match = (data.result as PlantStatus[]).find((p: PlantStatus) => p.plantName === plant.plantName);
               setSelectedStatus(match?.status || []);
             } catch (err) {
               console.error("Failed to fetch status:", err);
