@@ -1,49 +1,113 @@
-'''
-WARNING: this file is outdated and requires modifications to work, see files demo.py, moisture_calibrate.py, light_sensor.py, etc
-'''
+#Only Sensors
+###############################################################################################################
+# LIBRARY IMPORTS
 
-import time, dht
-from machine import Pin, ADC, I2C
-#from machine import SoftI2C
-########################################################################################
-'''
-WARNING: NEED TO ADJUST I2C IMPORT TO SOFTI2C FOR ESP32 
-    -Redefine i2c variables from I2C(...) to SoftI2C(...)
-    -Rename i2c variables to light_i2c, temp_i2c, etc.
-    -Redo pin assignments to avoid overlap
-'''
-########################################################################################
-#LIGHT SENSOR TEST CODE
+from machine import Pin, PWM, ADC, SoftI2C, deepsleep, reset_cause, DEEPSLEEP_RESET, wake_reason
+import time, network, urequests, dht, esp32, machine
 
+################################################################################################################
+# HELPER FUNCTIONS & CLASSES
 
+# Battery Monitor (MAX17048)
+MAX17048_ADDR = 0x36
+VCELL_REG = 0x02
+SOC_REG = 0x04
+RESET_REG = 0xFE
+RESET_CMD = b'\x54\x00'  # Must send 2 bytes
+STATUS_REG = 0x00
+DEVICE_ID_REG = 0x08
+class MAX17048:
+    def __init__(self, i2c, address=MAX17048_ADDR):
+        self.i2c = i2c
+        self.address = address
+        self.init_device()
+    def init_device(self):
+        """Check if the device is connected."""
+        devices = self.i2c.scan()
+        if self.address not in devices:
+            # raise Exception("MAX17048 not detected on I2C bus") #DEBUG
+            print("MAX17048 fuel gauge not detected on I2C bus")
+        else:
+            print("MAX17048 fuel gauge initialized successfully.")
+    def read_status(self):
+        raw = self.i2c.readfrom_mem(MAX17048_ADDR, STATUS_REG, 2)
+        status = (raw[0] << 8) | raw[1]
+        return status
+    def read_device_id(self):
+        raw = self.i2c.readfrom_mem(MAX17048_ADDR, DEVICE_ID_REG, 2)
+        return (raw[0] << 8) | raw[1]
+    def read_voltage(self):
+        """Reads battery voltage from VCELL register."""
+        raw = self.i2c.readfrom_mem(self.address, VCELL_REG, 2)
+        voltage = ((raw[0] << 8) | raw[1]) >> 4  # 12-bit value
+        return voltage * 0.00125  # Each step = 1.25mV
+    def read_soc(self):
+        """Reads battery state-of-charge (SOC) from SOC register."""
+        raw = self.i2c.readfrom_mem(self.address, SOC_REG, 2)
+        soc = raw[0] + (raw[1] / 256.0)  # Integer part + fractional part
+        return soc
+    
+################################################################################################################
+# GLOBAL VARIABLES
 
-########################################################################################
-#SOIL MOISTURE SENSOR TEST CODE
+# Sleep Time (in minutes)
+sleep_time = 0.5
 
-# Set up the analog input pin
+# Max Attempts/Timeouts
+max_attempts = 3 #number of attempts to make urequest to ThingSpeak
+max_timeout = 15 #time to wait for wifi connection (in seconds)
+
+# Battery Low Charge Threshold
+low_soc = 20 #percentage
+
+#Soil Moisture Sensor Calibration
+cal_max = 420 #sensor value read with sensor submerged in water
+cal_min = 335 #sensor value read with sensor in dry air
+
+# Wi-Fi Credentials
+ssid = 'iPhoneCS'
+password = 'password408'
+
+# ThingSpeak Channel Info
+temperature_field = 1
+moisture_field = 2
+light_field = 3
+led_field = 4
+humidity_field = 5
+soc_field = 6
+
+################################################################################################################
+# HARDWARE CONNECTIONS (Directly to ESP32)
+
+# Soil Moisture Sensor
 moisture_sensor_pin = ADC(Pin(36))
 moisture_sensor_pin.atten(ADC.ATTN_11DB)
+# Temperature/Humidity Sensor
+dht_sensor = dht.DHT22(Pin(4))
+# Light Sensor
+light_sensor_pin = ADC(Pin(34))
+light_sensor_pin.atten(ADC.ATTN_11DB)
+# Battery Fuel Gauge
+batt_i2c = SoftI2C(scl=Pin(14), sda=Pin(22), freq=400000)
+fuelgauge = MAX17048(batt_i2c)
+# LED Control
+red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
+green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
+blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
+
+################################################################################################################
+# SENSOR MEASURE FUNCTIONS
 
 # Function to read the soil moisture value
 def read_moisture():
     global cal_max, cal_min
-    # Read the analog value from the sensor (0-4095)
     sensor_value = moisture_sensor_pin.read()
-    # Calibrate the min and max values (these values are specific to the sensor and environment, and may need to be adjusted manually
     if sensor_value <= cal_min:
         sensor_value = cal_min
     elif sensor_value >= cal_max:
         sensor_value = cal_max
-
     moisture_percentage = 100 - round(((sensor_value - cal_min)/(cal_max - cal_min))*100, 2)
     return moisture_percentage
-
-########################################################################################
-#TEMPERATURE/HUMIDITY SENSOR TEST CODE
-
-#temp_sensor_pin = ADC(Pin(39))  # GPIO 34 is an example pin
-#temp_sensor_pin.atten(ADC.ATTN_11DB)  # Set attenuation to 0dB (default: 0-3.3V range)
-dht_sensor = dht.DHT22(Pin(4))
 
 # Function to read the temperature/humidity values
 def read_dht():
@@ -52,63 +116,31 @@ def read_dht():
         temp = dht_sensor.temperature()  # Get temperature in Celsius
         temp = (9*temp/5)+32
         hum = dht_sensor.humidity()  # Get humidity in %
-        return temp, hum
+        return temp, hum 
     except OSError as e:
         print("Failed to read sensor:", e)
 
-########################################################################################
-#BATTERY SENSOR TEST CODE
+# Function to read the light sensor value
+def read_light():
+    light_value = light_sensor_pin.read()
+    light_lux = light_value * 1000 / 4095
+    return light_lux
 
-# Initialize I2C (SDA = GPIO 21, SCL = GPIO 22)
-i2c = I2C(scl=Pin(22), sda=Pin(21), freq=100000)
-# battery_i2c = SoftI2C(scl=Pin(22), sda=Pin(21))  # Software I2C for battery sensor
-
-# I2C address of the fuel gauge (usually 0x55 for BQ27441)
-FUEL_GAUGE_ADDRESS = 0x55
-
-# Register addresses for BQ27441 (or similar fuel gauges)
-VOLTAGE_REGISTER = 0x02  # Battery Voltage register
-SOC_REGISTER = 0x04      # State of Charge (SOC) register
-
-# Function to read 2 bytes from a register
-def read_register(register):
-    data = i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
-    # data = battery_i2c.readfrom_mem(FUEL_GAUGE_ADDRESS, register, 2)
-    return (data[0] << 8) | data[1]
-
-# Function to read battery voltage (in mV)
-def read_battery_voltage():
-    raw_voltage = read_register(VOLTAGE_REGISTER)
-    voltage = raw_voltage * 0.00125  # Voltage in volts (divide by 1000 for mV to V conversion)
-    return voltage
-
-# Function to read battery SOC (State of Charge in percentage)
-def read_battery_soc():
-    raw_soc = read_register(SOC_REGISTER)
-    soc = raw_soc * 0.1  # State of Charge in percentage (multiplied by 0.1)
-    return soc
-
-########################################################################################
-# Main Program Loop
-while True:
-    #Light Sensor
-    lux_raw = read_register(ALS_DATA)
-    lux = lux_raw * 0.0036  # Convert raw value to Lux
-    print(f"Ambient Light: {lux:.2f} Lux")
-
-    #Soil Moisture Sensor
+# Function to read all sensor values
+def read_all():
+    #WARNING: could implement try-except to try to catch errors for -99 values
+    moisture = temp = humidity = light = soc = -99
     moisture = read_moisture()
-    print("Soil Moisture: {:.2f}%".format(moisture))
+    temp, humidity = read_dht()
+    light = read_light()
+    soc = fuelgauge.read_soc()
+    sensor_list = [temp, moisture, light, "000000",humidity, soc]
+    return sensor_list
 
-    #Temperature/Humidity Sensor
-    temperature, humidity = read_dht()
-    print("Temperature: {:.2f}".format(temperature))
-    print("Humidity: {:.2f}%".format(humidity))
-
-    #Battery Fuel Gauge Sensor
-    voltage = read_battery_voltage()
-    soc = read_battery_soc()
-    print("Battery Voltage: {:.2f} V".format(voltage))
-    print("Battery SOC: {:.2f}%".format(soc))
-
-    time.sleep(2)  # Delay for readability
+timetomeasure = int(input("Enter time to measure (in seconds): "))
+starttime = time.time()
+while time.time() - starttime < timetomeasure:
+    print("Measuring...")
+    sensor_list = read_all()
+    print("Sensor List:", sensor_list)
+    time.sleep(1)  # Sleep for 1 second between measurements

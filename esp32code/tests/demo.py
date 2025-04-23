@@ -51,8 +51,13 @@ class MAX17048:
         return voltage * 0.00125  # Each step = 1.25mV
     def read_soc(self):
         """Reads battery state-of-charge (SOC) from SOC register."""
-        raw = self.i2c.readfrom_mem(self.address, SOC_REG, 2)
-        soc = raw[0] + (raw[1] / 256.0)  # Integer part + fractional part
+        try:
+            raw = self.i2c.readfrom_mem(self.address, SOC_REG, 2)
+            soc = raw[0] + (raw[1] / 256.0)  # Integer part + fractional part
+            return soc
+        except Exception as e:
+            print("Error:", e)
+            return 0
         return soc
     
 ################################################################################################################
@@ -153,6 +158,7 @@ def read_dht():
         return temp, hum 
     except OSError as e:
         print("Failed to read sensor:", e)
+        return 0,0
 
 # Function to read the light sensor value
 def read_light():
@@ -284,6 +290,10 @@ def hex_to_rgb(hex_str):
 def set_color(r, g, b):
     # Invert PWM for common anode (WARNING: DEPENDING ON OUR LED INDICATOR, THIS MIGHT NEED TO BE CHANGED)
     # Tested this function with a common anode RGB LED with 330 and 470 Ohm resistors
+    if r != 0 or b != 0:
+        red_pin.duty_u16(0)
+        green_pin.duty_u16(65535)
+        blue_pin.duty_u16(65535)
     red_pin.duty_u16(65535 - int(r * 65535 / 255))
     green_pin.duty_u16(65535 - int(g * 65535 / 255))
     blue_pin.duty_u16(65535 - int(b * 65535 / 255))
@@ -436,3 +446,19 @@ elif check == 3:
     print("Done!")
     time.sleep(5)
     set_color(0,0,0) #Turn off LED
+elif check == 4:
+    check2 = 0
+    while True:
+    # while check2 != 1:
+        # check2 = int(input("Enter 1 to exit testing mode: "))
+        # if check2 == 1:
+            # print("Exiting testing mode")
+            # set_color(0,0,0)
+            # break
+        # else:
+        colorstring = input("Enter hex color code (6-char string): ")
+        r,g,b = (hex_to_rgb(colorstring))
+        set_color(r,g,b)
+        print(f"Color set to: {colorstring} for five seconds")
+        time.sleep(4)
+        set_color(0,0,0)
