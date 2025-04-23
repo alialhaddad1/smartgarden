@@ -116,7 +116,7 @@ export default function MonitorPage() {
       console.error("Error fetching ThingSpeak data:", error);
     }
   };
-  /*
+  
   const fetchPlants = async () => {
     try {
       const res = await fetch("/api/get-plants");
@@ -132,7 +132,7 @@ export default function MonitorPage() {
       setPlants([]); // Prevents crashing by ensuring an empty array
     }
   };
-  */
+  
   const fetchPlantStatus = async (): Promise<PlantStatus[]> => {
     try {
       const command = new ScanCommand({ TableName: "plantData" });
@@ -215,17 +215,17 @@ export default function MonitorPage() {
 
     fetchThingSpeakData();
 
-    //fetchPlants();
+    fetchPlants();
 
     fetchPlantStatus().then(setPlantStatuses);
 
     // Poll every X seconds to get real-time updates
     const interval_1 = setInterval(fetchThingSpeakData, 10000);
-    //const interval_2 = setInterval(fetchPlants, 5000);
+    const interval_2 = setInterval(fetchPlants, 5000);
     const interval_3 = setInterval(fetchPlantStatus, 10000);
     return () => {
       clearInterval(interval_1);
-      //clearInterval(interval_2);
+      clearInterval(interval_2);
       clearInterval(interval_3);
     }; 
   }, []);
