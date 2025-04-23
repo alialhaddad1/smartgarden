@@ -55,6 +55,7 @@ export default function MonitorPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [plantStatuses, setPlantStatuses] = useState<PlantStatus[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<{ status: string; message?: string }[] | null>(null);
   const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
   const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2" }];
 
@@ -166,11 +167,16 @@ export default function MonitorPage() {
   return (
     <div className="p-4">
       <h1 className="ant-typography">Your Plants</h1>
-      <h2 className="text-xl font-bold mb-4">This page allows users <br></br>to view their saved plants.</h2>
+      <h2 className="text-xl font-bold mb-4">
+        This page allows users <br />to view their saved plants.
+      </h2>
+  
       <nav>
         <ul>
           <li>
-            <Button className="ant-btn-primary" href="/">Home Page</Button>
+            <Button className="ant-btn-primary" href="/">
+              Home Page
+            </Button>
           </li>
         </ul>
       </nav>
@@ -179,22 +185,24 @@ export default function MonitorPage() {
       <select
         className="border p-2 rounded w-full"
         style={{ color: "black" }}
-        onChange={(e) => {
+        onChange={async (e) => {
           const plant = plants.find((p) => p.plantName === e.target.value) || null;
           setSelectedPlant(plant);
+          setSelectedStatus(null); // reset while loading
+        
+          if (plant) {
+            try {
+              const res = await fetch("/api/get-plant-status");
+              const data = await res.json();
+              const match = data.result.find((p: any) => p.plantName === plant.plantName);
+              setSelectedStatus(match?.status || []);
+            } catch (err) {
+              console.error("Failed to fetch status:", err);
+              setSelectedStatus([{ status: "error", message: "Could not load plant status." }]);
+            }
+          }
         }}
       >
-        {selectedPlant && (
-          <div className="plant-card mt-4 border p-4 rounded shadow">
-            <h2 className="text-lg font-semibold">{selectedPlant.plantName}</h2>
-            <p>Moisture: {selectedPlant.moisture || "N/A"}</p>
-            <p>Sunlight: {selectedPlant.sunlight || "N/A"}</p>
-            <p>Temperature: {selectedPlant.temperature || "N/A"}</p>
-            <p>Humidity: {selectedPlant.humidity || "N/A"}</p>
-            <p>LED Status: {selectedPlant.led || "N/A"}</p>
-            <p>Battery: {selectedPlant.battery || "N/A"}</p>
-          </div>
-        )}
         <option value="">Select a plant</option>
         {plants.map((plant) => (
           <option key={plant.plantName} value={plant.plantName}>
@@ -202,22 +210,31 @@ export default function MonitorPage() {
           </option>
         ))}
       </select>
-
   
-      {/* Show details of the selected plant */}
+      {/* Show status for selected plant */}
       {selectedPlant && (
-        <div className="mt-4 p-4 border rounded">
+        <div className="mt-4 p-4 border rounded shadow">
           <h2 className="text-lg font-semibold">{selectedPlant.plantName}</h2>
-          <p>Moisture Needs: {selectedPlant.moisture}</p>
-          <p>Sunlight Needs: {selectedPlant.sunlight}</p>
-          <p>Temperature Range: {selectedPlant.temperature}</p>
-          <p>Humidity Needs: {selectedPlant.humidity}</p>
-          <p>Battery Life: {selectedPlant.battery}</p>
+  
+          <div className="mt-2">
+            <h3 className="font-semibold mb-1">Status:</h3>
+            {Array.isArray(selectedStatus) && selectedStatus.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {selectedStatus.map((s, idx) => (
+                  <li key={idx}>
+                    <strong>{s.status}</strong>{s.message ? ` — ${s.message}` : ""}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Loading or no status available.</p>
+            )}
+          </div>
   
           {/* Remove Plant Button */}
           <Button
             onClick={() => removePlant(selectedPlant.plantName)}
-            className="ant-btn-primary"
+            className="ant-btn-primary mt-4"
           >
             Remove from Collection
           </Button>
@@ -230,14 +247,36 @@ export default function MonitorPage() {
         {Object.keys(thingSpeakData).length > 0 ? (
           Object.entries(thingSpeakData).map(([channelId, entry]) => (
             <div key={channelId} className="mt-2 p-2 border rounded">
-              <p><strong>Channel ID:</strong> {channelId}</p>
-              <p><strong>Timestamp:</strong> {new Date(entry.created_at).toLocaleString()}</p>
-              <p><strong>Temperature (F):</strong> {entry.field1 !== null ? entry.field1 : "N/A"}</p>
-              <p><strong>Moisture (%):</strong> {entry.field2 !== null ? entry.field2 : "N/A"}</p>
-              <p><strong>Sunlight (lux):</strong> {entry.field3 !== null ? entry.field3 : "N/A"}</p>
-              <p><strong>LED Color:</strong> {entry.field4 ?? "N/A"}                       </p>
-              <p><strong>Humidity (%):</strong> {entry.field5 !== null ? entry.field5 : "N/A"}</p>
-              <p><strong>Battery Life (%):</strong> {entry.field6 !== null ? entry.field6 : "N/A"}</p>
+              <p>
+                <strong>Channel ID:</strong> {channelId}
+              </p>
+              <p>
+                <strong>Timestamp:</strong>{" "}
+                {new Date(entry.created_at).toLocaleString()}
+              </p>
+              <p>
+                <strong>Temperature (F):</strong>{" "}
+                {entry.field1 !== null ? entry.field1 : "N/A"}
+              </p>
+              <p>
+                <strong>Moisture (%):</strong>{" "}
+                {entry.field2 !== null ? entry.field2 : "N/A"}
+              </p>
+              <p>
+                <strong>Sunlight (lux):</strong>{" "}
+                {entry.field3 !== null ? entry.field3 : "N/A"}
+              </p>
+              <p>
+                <strong>LED Color:</strong> {entry.field4 ?? "N/A"}
+              </p>
+              <p>
+                <strong>Humidity (%):</strong>{" "}
+                {entry.field5 !== null ? entry.field5 : "N/A"}
+              </p>
+              <p>
+                <strong>Battery Life (%):</strong>{" "}
+                {entry.field6 !== null ? entry.field6 : "N/A"}
+              </p>
             </div>
           ))
         ) : (
