@@ -46,15 +46,23 @@ type Plant = {
   battery: string;
 };
 
-interface PlantStatus {
+interface Status {
   plantName: string;
   status: { status: string; message?: string }[];
+};
+
+type PlantStatus = {
+  plantName: string;
+  status: {
+    status: string;
+    message?: string;
+  }[];
 };
 
 export default function MonitorPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
-  const [plantStatuses, setPlantStatuses] = useState<PlantStatus[]>([]);
+  const [plantStatuses, setPlantStatuses] = useState<Status[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<{ status: string; message?: string }[] | null>(null);
   const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
   const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2" }];
@@ -194,7 +202,7 @@ export default function MonitorPage() {
             try {
               const res = await fetch("/api/get-plant-status");
               const data = await res.json();
-              const match = data.result.find((p: any) => p.plantName === plant.plantName);
+              const match = (data.result as PlantStatus[]).find((p) => p.plantName === plant.plantName);
               setSelectedStatus(match?.status || []);
             } catch (err) {
               console.error("Failed to fetch status:", err);
