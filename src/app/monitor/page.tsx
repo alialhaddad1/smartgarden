@@ -2,8 +2,8 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
+//import { unmarshall } from "@aws-sdk/util-dynamodb";
+//import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
 /* 
@@ -13,7 +13,7 @@ import '../styles.css';
   // Change needed = orange
   // Check updated values of battery from database to change to red
 */
-
+/*
 const dynamoDB = new DynamoDBClient({
   region: "us-east-2",
   credentials: {
@@ -21,7 +21,7 @@ const dynamoDB = new DynamoDBClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
-
+*/
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
   created_at: string;
@@ -133,75 +133,12 @@ export default function MonitorPage() {
     }
   };
   */
-  const fetchPlantStatus = async (): Promise<PlantStatus[]> => {
-    try {
-      const command = new ScanCommand({ TableName: "plantData" });
-      const data = await dynamoDB.send(command);
-  
-      return (
-        data.Items?.map((rawPlant) => {
-          const plant = unmarshall(rawPlant);
-  
-          const moistureMin = Number(plant.moisture) * 0.85;
-          const moistureMax = Number(plant.moisture) * 1.15;
-          const sunlightMin = Number(plant.sunlight) * 0.85;
-          const sunlightMax = Number(plant.sunlight) * 1.15;
-          const tempRange = plant.temperature?.split("-").map(Number) || [];
-          const humidityMin = Number(plant.humidity) * 0.85;
-          const humidityMax = Number(plant.humidity) * 1.15;
-          const batteryMin = 20;
-  
-          const microMoisture = Number(plant.microMoisture);
-          const microSun = Number(plant.microSun);
-          const microTemp = Number(plant.microTemp);
-          const microHumid = Number(plant.microHumid);
-          const microBattery = Number(plant.microBattery);
-  
-          const statuses: { status: string; message?: string }[] = [];
-  
-          if (microMoisture < moistureMin)
-            statuses.push({ status: "too little moisture", message: plant.shortageMoisture });
-          if (microMoisture > moistureMax)
-            statuses.push({ status: "too much moisture", message: plant.surplusMoisture });
-  
-          if (microSun < sunlightMin)
-            statuses.push({ status: "too little sunlight", message: plant.shortageSun });
-          if (microSun > sunlightMax)
-            statuses.push({ status: "too much sunlight", message: plant.surplusSun });
-  
-          if (tempRange.length === 2) {
-            if (microTemp < tempRange[0])
-              statuses.push({ status: "too cold", message: plant.shortageTemp });
-            if (microTemp > tempRange[1])
-              statuses.push({ status: "too hot", message: plant.surplusTemp });
-          }
-  
-          if (microHumid < humidityMin)
-            statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
-          if (microHumid > humidityMax)
-            statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
-  
-          if (microBattery < batteryMin)
-            statuses.push({ status: "battery low", message: "Recharge or replace battery" });
-  
-          if (plant.microLED)
-            statuses.push({ status: `LED status: ${plant.microLED}` });
-  
-          return {
-            plantName: plant.plantName,
-            status: statuses.length
-              ? statuses
-              : [{ status: "looking good", message: "Everything is fine" }],
-          };
-        }) || []
-      );
-    } catch (error) {
-      console.error("Error fetching plant status:", error);
-      return [];
-    }
+  const fetchPlantStatus = async () => {
+    const res = await fetch("/api/get-plant-status");
+    return res.json();
   };
   
-  useEffect(() => {    
+  useEffect(() => {
     const loadStatus = async () => {
       const statuses = await fetchPlantStatus();
       console.log("Plant statuses:", setPlants); // This makes it “used”
@@ -212,22 +149,18 @@ export default function MonitorPage() {
     };
 
     loadStatus();
+  
+    fetchPlantStatus();
 
     fetchThingSpeakData();
-
-    //fetchPlants();
-
-    fetchPlantStatus().then(setPlantStatuses);
-
-    // Poll every X seconds to get real-time updates
+  
     const interval_1 = setInterval(fetchThingSpeakData, 10000);
-    //const interval_2 = setInterval(fetchPlants, 5000);
-    const interval_3 = setInterval(fetchPlantStatus, 10000);
+    const interval_2 = setInterval(loadStatus, 10000);
+  
     return () => {
       clearInterval(interval_1);
-      //clearInterval(interval_2);
-      clearInterval(interval_3);
-    }; 
+      clearInterval(interval_2);
+    };
   }, []);
   
   return (
