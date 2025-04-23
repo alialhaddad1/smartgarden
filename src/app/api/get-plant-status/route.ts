@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from 'next/server';
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
@@ -10,7 +10,7 @@ const dynamoDB = new DynamoDBClient({
   },
 });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function GET() { 
   try {
     const [plantDataRaw, speciesDataRaw] = await Promise.all([
       dynamoDB.send(new ScanCommand({ TableName: "plantData" })),
@@ -84,9 +84,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     });
 
-    res.status(200).json(result);
+    return NextResponse.json({ result });
   } catch (error) {
     console.error("Error in /api/get-plant-status:", error);
-    res.status(500).json({ error: "Failed to fetch plant statuses." });
+    return NextResponse.json({ error: 'Failed to fetch plant status' }, { status: 500 });
   }
 }
