@@ -39,24 +39,26 @@ const dynamoDB = new DynamoDBClient({
           const microHumid = Number(plant.humidity);
           const microBattery = Number(plant.battery);
   
-          const moistureMin = Number(species.moisture) * 0.85;
-          const moistureMax = Number(species.moisture) * 1.15;
-          const sunlightMin = Number(species.sunlight) * 0.85;
-          const sunlightMax = Number(species.sunlight) * 1.15;
+          const moistureRange = (species.moisture?.split("-") ?? []).map(Number);
+          const sunlightRange = (species.sunlight?.split("-") ?? []).map(Number);
+          const tempRange = (species.temperature?.split("-") ?? []).map(Number);
           const humidityMin = Number(species.humidity) * 0.85;
           const humidityMax = Number(species.humidity) * 1.15;
           const batteryMin = 20;
-          const tempRange = (species.temperature?.split("-") ?? []).map(Number);
+          
+          if(moistureRange.length === 2) {
+            if (microMoisture < moistureRange[0])
+                statuses.push({ status: "too little moisture", message: species.shortageMoisture });
+            else if (microMoisture > moistureRange[1])
+                statuses.push({ status: "too much moisture", message: species.surplusMoisture });
+          }
   
-          if (microMoisture < moistureMin)
-            statuses.push({ status: "too little moisture", message: species.shortageMoisture });
-          else if (microMoisture > moistureMax)
-            statuses.push({ status: "too much moisture", message: species.surplusMoisture });
-  
-          if (microSun < sunlightMin)
-            statuses.push({ status: "too little sunlight", message: species.shortageSun });
-          else if (microSun > sunlightMax)
-            statuses.push({ status: "too much sunlight", message: species.surplusSun });
+          if(sunlightRange.length === 2) {
+            if (microSun < sunlightRange[0])
+                statuses.push({ status: "too little sunlight", message: species.shortageSunlight });
+            else if (microSun > sunlightRange[1])
+                statuses.push({ status: "too much sunlight", message: species.surplusSunlight });
+          }
   
           if (tempRange.length === 2) {
             if (microTemp < tempRange[0])
