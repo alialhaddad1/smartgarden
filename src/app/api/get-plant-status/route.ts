@@ -3,14 +3,14 @@ import { DynamoDBClient, ScanCommand, UpdateItemCommand } from "@aws-sdk/client-
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 const dynamoDB = new DynamoDBClient({
-  region: "us-east-2",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-export async function GET() {
+    region: "us-east-2",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+  
+  export async function GET() {
     try {
       const [plantDataRaw, speciesDataRaw] = await Promise.all([
         dynamoDB.send(new ScanCommand({ TableName: "plantData" })),
@@ -19,7 +19,7 @@ export async function GET() {
   
       const plantData = plantDataRaw.Items?.map((item) => unmarshall(item)) || [];
       const speciesData = speciesDataRaw.Items?.map((item) => unmarshall(item)) || [];
-      const speciesMap = new Map(speciesData.map(species => [species.plantName, species]));
+      const speciesMap = new Map(speciesData.map((species) => [species.plantName, species]));
   
       const result = await Promise.all(
         plantData.map(async (plant) => {
@@ -33,11 +33,11 @@ export async function GET() {
   
           const statuses: { status: string; message?: string }[] = [];
   
-          const microMoisture = Number(plant.microMoisture);
-          const microSun = Number(plant.microSun);
-          const microTemp = Number(plant.microTemp);
-          const microHumid = Number(plant.microHumid);
-          const microBattery = Number(plant.microBattery);
+          const microMoisture = Number(plant.moisture);
+          const microSun = Number(plant.sunlight);
+          const microTemp = Number(plant.temperature);
+          const microHumid = Number(plant.humidity);
+          const microBattery = Number(plant.battery);
   
           const moistureMin = Number(species.moisture) * 0.85;
           const moistureMax = Number(species.moisture) * 1.15;
@@ -66,9 +66,9 @@ export async function GET() {
           }
   
           if (microHumid < humidityMin)
-            statuses.push({ status: "humidity too low", message: "Increase ambient humidity" });
+            statuses.push({ status: "humidity too low", message: species.shortageHumid || "Increase ambient humidity" });
           else if (microHumid > humidityMax)
-            statuses.push({ status: "humidity too high", message: "Reduce ambient humidity" });
+            statuses.push({ status: "humidity too high", message: species.surplusHumid || "Reduce ambient humidity" });
   
           if (microBattery < batteryMin)
             statuses.push({ status: "battery low", message: "Recharge or replace battery" });
@@ -85,7 +85,6 @@ export async function GET() {
               ? "#00FF00"
               : "#FF0000";
   
-          // Only update if color changed
           if (plant.led !== ledColor) {
             await dynamoDB.send(
               new UpdateItemCommand({
@@ -111,6 +110,6 @@ export async function GET() {
       return NextResponse.json({ result });
     } catch (error) {
       console.error("Error in /api/get-plant-status:", error);
-      return NextResponse.json({ error: 'Failed to fetch plant status' }, { status: 500 });
+      return NextResponse.json({ error: "Failed to fetch plant status" }, { status: 500 });
     }
-}  
+  }

@@ -6,13 +6,6 @@ import { Button } from 'antd';
 //import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
 
-/* 
-1. Implement LED light change algorithm; you write this value to the database
-  // Low battery = red
-  // No change needed = green
-  // Change needed = orange
-  // Check updated values of battery from database to change to red
-*/
 /*
 const dynamoDB = new DynamoDBClient({
   region: "us-east-2",
@@ -22,6 +15,7 @@ const dynamoDB = new DynamoDBClient({
   },
 });
 */
+
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
   created_at: string;

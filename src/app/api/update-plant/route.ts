@@ -15,7 +15,15 @@ export const POST = async (req: NextRequest) => {
   }
 
   const body = await req.json();
-  const { plantName, microMoisture, microSun, microTemp, microHumid, microLED, microBattery } = body;
+  const {
+    plantName,
+    microMoisture,
+    microSun,
+    microTemp,
+    microHumid,
+    microLED,
+    microBattery,
+  } = body;
 
   if (!plantName) {
     return NextResponse.json({ error: "Missing plantName" }, { status: 400 });
@@ -23,16 +31,17 @@ export const POST = async (req: NextRequest) => {
 
   try {
     const command = new UpdateItemCommand({
-      TableName: "YourTableName",
+      TableName: "plantData", // ✅ Correct table name
       Key: { plantName: { S: plantName } },
-      UpdateExpression: "SET moisture = :m, sunlight = :s, temperature = :t, humidity = :h, led = :l, battery = :b",
+      UpdateExpression:
+        "SET moisture = :m, sunlight = :s, temperature = :t, humidity = :h, led = :l, battery = :b",
       ExpressionAttributeValues: {
-        ":m": { S: microMoisture },
-        ":s": { S: microSun },
-        ":t": { S: microTemp },
-        ":h": { S: microHumid },
+        ":m": { S: microMoisture.toString() },
+        ":s": { S: microSun.toString() },
+        ":t": { S: microTemp.toString() },
+        ":h": { S: microHumid.toString() },
         ":l": { S: microLED },
-        ":b": { S: microBattery },
+        ":b": { S: microBattery.toString() },
       },
     });
 
