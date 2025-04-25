@@ -11,6 +11,21 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   position: relative; /* Ensure it acts as a reference for pseudo-element */
+
+  &::before {
+    content: ""; /* Required for pseudo-elements */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Overlay color */
+    background-color: rgba(255, 255, 255, 0.25); /* Adjust transparency as needed */
+    
+    /* Ensures it appears on top of the background */
+    z-index: -1;
+  }
 }
 
 body::before {
