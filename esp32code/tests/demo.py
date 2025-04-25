@@ -74,8 +74,8 @@ max_timeout = 15 #time to wait for wifi connection (in seconds)
 low_soc = 20 #percentage
 
 #Soil Moisture Sensor Calibration
-cal_max = 420 #sensor value read with sensor submerged in water
-cal_min = 335 #sensor value read with sensor in dry air
+cal_max = 530 #sensor value read with sensor submerged in water
+cal_min = 300 #sensor value read with sensor in dry air
 
 # Wi-Fi Credentials
 ssid = 'iPhoneCS'
@@ -101,12 +101,12 @@ dht_sensor = dht.DHT22(Pin(4))
 light_sensor_pin = ADC(Pin(34))
 light_sensor_pin.atten(ADC.ATTN_11DB)
 # Battery Fuel Gauge
-batt_i2c = SoftI2C(scl=Pin(14), sda=Pin(22), freq=400000)
+batt_i2c = SoftI2C(scl=Pin(32), sda=Pin(33), freq=100000)
 fuelgauge = MAX17048(batt_i2c)
 # LED Control
 red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
 green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
-blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
+blue_pin = PWM(Pin(19), freq=1000, duty_u16=65535)
 
 ################################################################################################################
 # SLEEP FUNCTIONS

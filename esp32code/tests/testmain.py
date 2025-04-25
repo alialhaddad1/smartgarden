@@ -3,7 +3,7 @@
 # from machine import Pin, PWM, ADC, SoftI2C, reset_cause, DEEPSLEEP_RESET, wake_reason
 # import time, network, urequests, dht, esp32, machine
 from machine import Pin, PWM, ADC, SoftI2C
-import dht, time, network
+import dht, time, network, urequests
 
 # HELPER FUNCTIONS & CLASSES
 
@@ -85,12 +85,12 @@ dht_sensor = dht.DHT22(Pin(4))
 light_sensor_pin = ADC(Pin(34))
 light_sensor_pin.atten(ADC.ATTN_11DB)
 # Battery Fuel Gauge
-batt_i2c = SoftI2C(scl=Pin(14), sda=Pin(22), freq=400000)
+batt_i2c = SoftI2C(scl=Pin(32), sda=Pin(33), freq=100000)
 fuelgauge = MAX17048(batt_i2c)
 # LED Control
 red_pin = PWM(Pin(21), freq=1000, duty_u16=65535)
 green_pin = PWM(Pin(7), freq=1000, duty_u16=65535)
-blue_pin = PWM(Pin(8), freq=1000, duty_u16=65535)
+blue_pin = PWM(Pin(19), freq=1000, duty_u16=65535)
 
 # SENSOR MEASURE FUNCTIONS
 
@@ -133,6 +133,33 @@ def read_light():
     volt = fuelgauge.read_voltage()
     soc = fuelgauge.read_soc()
 '''
+
+# Function to send data to ThingSpeak
+def send_all(all_field_data):
+    global max_attempts
+    global temperature_field, moisture_field, light_field, led_field, humidity_field, soc_field
+    temp = all_field_data[temperature_field-1]
+    moisture = all_field_data[moisture_field-1]
+    light = all_field_data[light_field-1]
+    led = all_field_data[led_field-1]
+    humidity = all_field_data[humidity_field-1]
+    soc = all_field_data[soc_field-1]
+    for attempt in range(max_attempts):
+        try:
+            print(f"Sending all sensor data to ThingSpeak")
+            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
+            response = urequests.get(url)
+            response.close()
+            print("Data sent successfully") #DEBUG?
+            return
+        except Exception as e:
+            print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
+            print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
+            if attempt < max_attempts-1:  # Wait before retrying
+                time.sleep(5)
+            else:
+                print("All attempts to update sensor data failed. Exiting...")
+                return
 
 # Function to read all sensor values
 def read_all():
@@ -197,6 +224,7 @@ time.sleep(2)
 set_color(0, 0, 255) #blue
 time.sleep(2)
 if wifi_connect():
+    send_all(read_values)
     set_color(0, 255, 0)
     time.sleep(2)
 else:
