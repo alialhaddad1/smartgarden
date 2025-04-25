@@ -2,13 +2,7 @@
 import React, { useState } from "react";
 import SearchBar from "../components/searchBar"; // Import the search bar component
 import { Button } from 'antd';
-//import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
-
-// ENTRIES NEED TO BE FORMATTED AS STRINGS? 
-
-// const ESP32_IP = "192.168.1.100"; // Predefined ESP32 IP address
-// const UPDATE_INTERVAL = 10000; // 10 seconds
 
 // Define the structure of a plant item from DynamoDB
 interface Plant {

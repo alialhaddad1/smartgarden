@@ -2,19 +2,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Button } from 'antd';
-//import { unmarshall } from "@aws-sdk/util-dynamodb";
-//import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import '../styles.css';
-
-/*
-const dynamoDB = new DynamoDBClient({
-  region: "us-east-2",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-*/
 
 // Define the structure for ThingSpeak data
 type ThingSpeakEntry = {
@@ -74,49 +62,9 @@ export default function MonitorPage() {
   
     if (res.ok) {
       alert(`${plantName} removed from your collection.`);
-      //setPlants(plants.filter((plant) => plant.plantName !== plantName)); // Update UI
       setSelectedPlant(null); // Clear selection
     } else {
       alert("Error removing plant. Try again.");
-    }
-  };
-
-  const fetchThingSpeakData = async () => {
-    try {
-      const results: Record<string, ThingSpeakEntry> = {};
-      
-      await Promise.all(
-        channel.map(async (channel) => {
-          const response = await fetch(
-            //`https://api.thingspeak.com/channels/${channel.id}/feeds.json?api_key=${channel.apiKey}&results=1`
-            `https://api.thingspeak.com/channels/${channel.id}/feeds.json?results=1&api_key=${channel.apiKey}`
-          );
-          const data = await response.json();
-  
-          console.log("Raw ThingSpeak API response:", data); // Debugging
-  
-          if (data.feeds && data.feeds.length > 0) {
-            const entry = data.feeds[0]; 
-            
-            results[channel.id] = {
-              created_at: entry.created_at,
-              field1: entry.field1 ? Number(entry.field1) : null,
-              field2: entry.field2 ? Number(entry.field2) : null,
-              field3: entry.field3 ? Number(entry.field3) : null,
-              field4: entry.field4 ?? null, // Keep as string for hex codes
-              field5: entry.field5 ? Number(entry.field5) : null,
-              field6: entry.field6 ? Number(entry.field6) : null,
-              field7: entry.field7 ? Number(entry.field7) : null,
-              field8: entry.field8 ? Number(entry.field8) : null,
-            };
-          }
-        })
-      );
-  
-      console.log("Processed ThingSpeak Data:", results); // Debugging
-      setThingSpeakData(results);
-    } catch (error) {
-      console.error("Error fetching ThingSpeak data:", error);
     }
   };
   
@@ -153,14 +101,11 @@ export default function MonitorPage() {
   
     fetchPlants(); 
     loadStatus();
-    fetchThingSpeakData();
   
-    const interval_1 = setInterval(fetchThingSpeakData, 10000);
-    const interval_2 = setInterval(loadStatus, 10000);
+    const interval = setInterval(loadStatus, 10000);
   
     return () => {
-      clearInterval(interval_1);
-      clearInterval(interval_2);
+      clearInterval(interval);
     };
   }, []);
   
@@ -240,49 +185,6 @@ export default function MonitorPage() {
           </Button>
         </div>
       )}
-  
-      {/* ThingSpeak Data Section - Always Visible */}
-      <div className="mt-6 p-4 border rounded">
-        <h2 className="text-lg font-semibold">Sensor Data (From ThingSpeak)</h2>
-        {Object.keys(thingSpeakData).length > 0 ? (
-          Object.entries(thingSpeakData).map(([channelId, entry]) => (
-            <div key={channelId} className="mt-2 p-2 border rounded">
-              <p>
-                <strong>Channel ID:</strong> {channelId}
-              </p>
-              <p>
-                <strong>Timestamp:</strong>{" "}
-                {new Date(entry.created_at).toLocaleString()}
-              </p>
-              <p>
-                <strong>Temperature (F):</strong>{" "}
-                {entry.field1 !== null ? entry.field1 : "N/A"}
-              </p>
-              <p>
-                <strong>Moisture (%):</strong>{" "}
-                {entry.field2 !== null ? entry.field2 : "N/A"}
-              </p>
-              <p>
-                <strong>Sunlight (lux):</strong>{" "}
-                {entry.field3 !== null ? entry.field3 : "N/A"}
-              </p>
-              <p>
-                <strong>LED Color:</strong> {entry.field4 ?? "N/A"}
-              </p>
-              <p>
-                <strong>Humidity (%):</strong>{" "}
-                {entry.field5 !== null ? entry.field5 : "N/A"}
-              </p>
-              <p>
-                <strong>Battery Life (%):</strong>{" "}
-                {entry.field6 !== null ? entry.field6 : "N/A"}
-              </p>
-            </div>
-          ))
-        ) : (
-          <p>Loading ThingSpeak data...</p>
-        )}
-      </div>
     </div>
   );
 }

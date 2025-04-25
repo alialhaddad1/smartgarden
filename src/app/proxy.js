@@ -1,5 +1,5 @@
-import express from "../../../node_modules/express";
-import fetch from "../../../node_modules/node-fetch";
+import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
 const PORT = 3001;
