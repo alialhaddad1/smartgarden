@@ -31,7 +31,7 @@ export const POST = async (req: NextRequest) => {
 
   try {
     const command = new UpdateItemCommand({
-      TableName: "plantData", // ✅ Correct table name
+      TableName: "plantData", 
       Key: { plantName: { S: plantName } },
       UpdateExpression:
         "SET moisture = :m, sunlight = :s, temperature = :t, humidity = :h, led = :l, battery = :b",
@@ -40,7 +40,7 @@ export const POST = async (req: NextRequest) => {
         ":s": { S: microSun.toString() },
         ":t": { S: microTemp.toString() },
         ":h": { S: microHumid.toString() },
-        ":l": { S: microLED },
+        ":l": { S: microLED.toString() },
         ":b": { S: microBattery.toString() },
       },
     });
@@ -48,7 +48,7 @@ export const POST = async (req: NextRequest) => {
     await dynamoDB.send(command);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error("DynamoDB error:", JSON.stringify(err, null, 2));
     return NextResponse.json({ error: "DynamoDB update failed" }, { status: 500 });
   }
 };
