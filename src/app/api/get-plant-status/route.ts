@@ -55,9 +55,9 @@ const dynamoDB = new DynamoDBClient({
   
           if(sunlightRange.length === 2) {
             if (microSun < sunlightRange[0])
-                statuses.push({ status: "too little sunlight", message: species.shortageSunlight });
+                statuses.push({ status: "too little sunlight", message: species.shortageSun });
             else if (microSun > sunlightRange[1])
-                statuses.push({ status: "too much sunlight", message: species.surplusSunlight });
+                statuses.push({ status: "too much sunlight", message: species.surplusSun });
           }
   
           if (tempRange.length === 2) {
