@@ -46,8 +46,6 @@ export default function MonitorPage() {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [plantStatuses, setPlantStatuses] = useState<Status[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<{ status: string; message?: string }[] | null>(null);
-  const [thingSpeakData, setThingSpeakData] = useState<Record<string, ThingSpeakEntry>>({});
-  const channel = [{ id: "2831003", apiKey: "XB89AZ0PZ5K91BV2" }];
 
   // Remove plant function
   const removePlant = async (plantName: string) => {
