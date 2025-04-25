@@ -4,19 +4,6 @@ import { useEffect, useState } from "react";
 import { Button } from 'antd';
 import '../styles.css';
 
-// Define the structure for ThingSpeak data
-type ThingSpeakEntry = {
-  created_at: string;
-  field1?: number | null;
-  field2?: number | null;
-  field3?: number | null;
-  field4?: string | null; // Keep field4 as a string for hex codes
-  field5?: number | null;
-  field6?: number | null;
-  field7?: number | null;
-  field8?: number | null;
-};
-
 // Define the structure of a plant item from DynamoDB
 type Plant = {
   plantName: string;
