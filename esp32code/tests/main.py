@@ -315,7 +315,7 @@ def main():
         return
     
     #Record time when wifi has connected (DEBUGGING ONLY)
-    wifi_start_time = time.time() #DEBUG
+    # wifi_start_time = time.time() #DEBUG
 
     #Read all recent data from ThingSpeak
     recent_list = receive_all()
