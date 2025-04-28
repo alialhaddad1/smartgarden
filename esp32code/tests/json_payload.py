@@ -17,7 +17,7 @@ def connect_wifi(ssid, password):
     time.sleep(2)  # small buffer to fully settle
 
 # Replace with your actual WiFi credentials
-connect_wifi("Ali-iPhone", "aaaaaaaa") # Depends on hotspot/mutual wifi
+connect_wifi("iPhoneCS", "password408") # Depends on hotspot/mutual wifi
 
 # REPLACE THESE WITH ACTUAL READINGS
 payload = {
