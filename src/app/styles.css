@@ -1,6 +1,15 @@
 /* Global styles for Ant Design components */
-.background {
-  position: fixed;
+body {
+  font-family: 'Liber Baskerville', serif;
+  color: #322900;
+  margin: 0;
+  padding: 0;
+  z-index: 1; /* Make sure it covers the background but not the text */
+}
+
+body::after {
+  content: "";
+  position: absolute; /* Absolute inside body */
   top: 0;
   left: 0;
   width: 100%;
@@ -9,15 +18,10 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: brightness(1.2); /* Lighten ONLY the background */
-  z-index: -1; /* Stay behind everything */
-}
-
-.content {
   position: relative;
-  z-index: 1; /* Text sits ABOVE background */
-  color: #322900; 
-  font-family: 'Liber Baskerville', serif;
+  background-color: rgba(255, 255, 255, 0.4); /* Lighten the background */
+  pointer-events: none; /* So it doesn't block clicking */
+  z-index: -1; /* Make sure it covers the background but not the text */
 }
   /* Customizing AntD Buttons */
   .ant-btn-primary {
