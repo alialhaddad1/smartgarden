@@ -36,19 +36,19 @@ headers = {
 }
 
 # Send data to the update endpoint
-response = urequests.post(
-    "http://172.20.10.2:3001/update-plant", # Depends on your ipconfig IP
-    json=payload,
-    headers=headers
-)
+# response = urequests.post(
+#     "http://172.20.10.2:3001/update-plant", # Depends on your ipconfig IP
+#     json=payload,
+#     headers=headers
+# )
 
-print("Write Response:", response.status_code, response.text)
-response.close()
+# print("Write Response:", response.status_code, response.text)
+# response.close()
 
 read_payload = {
     "plantName": "Money Tree"
 }
-read_response = urequests.post(
+read_response = urequests.get(
     "http://172.20.10.2:3001/read-plant", # Depends on your ipconfig IP
     json=read_payload,
     headers=headers

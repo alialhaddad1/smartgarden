@@ -9,16 +9,15 @@ const dynamoDB = new DynamoDBClient({
   },
 });
 
-export const POST = async (req: NextRequest) => {
+export const GET = async (req: NextRequest) => {
+  const plantName = req.nextUrl.searchParams.get("plantName");
+
   if (req.headers.get("x-api-key") !== process.env.ESP_API_KEY) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { plantName } = body;
-
   if (!plantName) {
-    return NextResponse.json({ error: "Missing plantName" }, { status: 400 });
+    return NextResponse.json({ error: "Missing plantName query parameter" }, { status: 400 });
   }
 
   try {
@@ -33,7 +32,6 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "Plant not found" }, { status: 404 });
     }
 
-    // Optionally: Parse attributes nicely into a simpler object
     const data = {
       plantName: response.Item.plantName?.S,
       moisture: response.Item.moisture?.S,
