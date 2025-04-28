@@ -1,49 +1,27 @@
 /* Global styles for Ant Design components */
 body {
-  font-family: 'Liber Baskerville'; /* Set global font */
-  color: #322900; 
+  font-family: 'Liber Baskerville', serif;
+  color: #322900;
   margin: 0;
   padding: 0;
-  
-  /* Background image */
   background-image: url("/background.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  position: relative; /* Ensure it acts as a reference for pseudo-element */
-
-  &::before {
-    content: ""; /* Required for pseudo-elements */
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Overlay color */
-    background-color: rgba(255, 255, 255, 0.25); /* Adjust transparency as needed */
-    
-    /* Ensures it appears on top of the background */
-    z-index: -1;
-  }
+  position: relative;
 }
 
-body::before {
-  content: ""; /* Required for pseudo-elements */
-  position: fixed;
+body::after {
+  content: "";
+  position: absolute; /* Absolute inside body */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  
-  /* Overlay color */
-  background-color: rgba(255, 255, 255, 0.10); /* Adjust transparency as needed */
-  
-  /* Ensures it appears on top of the background */
-  z-index: -1;
+  background-color: rgba(255, 255, 255, 0.4); /* Lighten the background */
+  pointer-events: none; /* So it doesn't block clicking */
+  z-index: 1; /* Make sure it covers the background but not the text */
 }
-
-  
   /* Customizing AntD Buttons */
   .ant-btn-primary {
     background-color: rgba(20, 130, 0, 0.65); /* Semi-transparent background */
