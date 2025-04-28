@@ -4,8 +4,8 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = 3001;
 
-const VERCEL_BASE_URL = "https://your-vercel-project.vercel.app/api";
-const API_KEY = "your-vercel-api-key";
+const VERCEL_BASE_URL = "https://smartgarden.vercel.app/api";
+const API_KEY = "cb9e9bc88da7b9c97eee595a4bab04ef6a8709cd97f5f573d9509c375ac58267";
 
 app.use(express.json());
 
