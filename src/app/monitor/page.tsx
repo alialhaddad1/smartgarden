@@ -145,7 +145,7 @@ export default function MonitorPage() {
       {selectedPlant && (
         <div className="mt-4 p-4 border rounded shadow">
           <h2 className="text-lg font-semibold">{selectedPlant.plantName}</h2>
-  
+
           <div className="mt-2">
             <h3 className="font-semibold mb-1">Status:</h3>
             {Array.isArray(selectedStatus) && selectedStatus.length > 0 ? (
@@ -160,8 +160,20 @@ export default function MonitorPage() {
               <p>Loading or no status available.</p>
             )}
           </div>
-  
-          {/* Remove Plant Button */}
+
+          {/* 🆕 ADD this section to show attributes */}
+          <div className="mt-4">
+            <h3 className="font-semibold mb-1">Current Attributes:</h3>
+            <ul className="list-disc list-inside">
+              <li>Moisture: {selectedPlant.moisture}</li>
+              <li>Sunlight: {selectedPlant.sunlight}</li>
+              <li>Temperature: {selectedPlant.temperature}</li>
+              <li>Humidity: {selectedPlant.humidity}</li>
+              <li>LED Status: {selectedPlant.led}</li>
+              <li>Battery: {selectedPlant.battery}</li>
+            </ul>
+          </div>
+
           <Button
             onClick={() => removePlant(selectedPlant.plantName)}
             className="ant-btn-primary mt-4"
