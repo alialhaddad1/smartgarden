@@ -49,8 +49,7 @@ read_payload = {
     "plantName": "Money Tree"
 }
 read_response = urequests.get(
-    "http://172.20.10.2:3001/read-plant", # Depends on your ipconfig IP
-    json=read_payload,
+    "http://172.20.10.2:3001/read-plant?plantName=Basil", # Depends on your ipconfig IP
     headers=headers
 )
 print("Read Response:", read_response.status_code, read_response.text)

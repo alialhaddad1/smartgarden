@@ -32,7 +32,13 @@ app.post("/update-plant", async (req, res) => {
 // Proxy GET requests to read-plant
 app.get("/read-plant", async (req, res) => {
   try {
-    const response = await fetch(`${VERCEL_BASE_URL}/read-plant`, {
+    const { plantName } = req.query;
+
+    if (!plantName) {
+      return res.status(400).json({ error: "Missing plantName query parameter" });
+    }
+
+    const response = await fetch(`${VERCEL_BASE_URL}/read-plant?plantName=${encodeURIComponent(plantName)}`, {
       method: "GET",
       headers: {
         "x-api-key": API_KEY,
@@ -46,6 +52,7 @@ app.get("/read-plant", async (req, res) => {
     res.status(500).json({ error: "Proxy failed on read-plant" });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`🌱 Proxy server running at http://localhost:${PORT}`);
