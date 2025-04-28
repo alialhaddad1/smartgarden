@@ -161,7 +161,7 @@ export default function MonitorPage() {
             )}
           </div>
 
-          {/* 🆕 ADD this section to show attributes */}
+          {/* Show attributes for selected plant */}
           <div className="mt-4">
             <h3 className="font-semibold mb-1">Current Attributes:</h3>
             <ul className="list-disc list-inside">
