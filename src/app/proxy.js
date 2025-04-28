@@ -4,9 +4,6 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = 3001;
 
-const express = require("express");
-const fetch = require("node-fetch");
-
 const VERCEL_BASE_URL = "https://your-vercel-project.vercel.app/api";
 const API_KEY = "your-vercel-api-key";
 
