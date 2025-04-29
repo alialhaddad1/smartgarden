@@ -18,7 +18,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.4); /* Lighten the background */
+  background-color: rgba(255, 255, 255, 0.25); /* Lighten the background */
   pointer-events: none; /* So it doesn't block clicking */
   z-index: -1; /* Make sure it covers the background but not the text */
 }
