@@ -49,8 +49,10 @@ read_payload = {
     "plantName": "Money Tree"
 }
 read_response = urequests.get(
-    "http://172.20.10.2:3001/read-plant?plantName=Basil", # Depends on your ipconfig IP
+    "http://172.20.10.2:3001/read-plant?plantName=Money%20Tree", # Depends on your ipconfig IP
     headers=headers
 )
-print("Read Response:", read_response.status_code, read_response.text)
+import ujson
+print("Read Response:", read_response.status_code)
+print(ujson.loads(read_response.text)["data"])
 read_response.close()
