@@ -55,7 +55,7 @@ export default function AddPage() {
     }
   };
 
-  return (
+  return ( 
     <div className="p-4">
       <h1 className="ant-typography">Add</h1>
       <h2 className="text-xl font-bold mb-4">This page allows users <br></br>to add plants <br></br>to their collection.</h2>
