@@ -55,7 +55,7 @@ sleep_time = 0.5
 
 # Max Attempts/Timeouts
 max_attempts = 3 #number of attempts to make urequest to ThingSpeak
-max_timeout = 1 #time to wait for wifi connection (in seconds)
+max_timeout = 60 #time to wait for wifi connection (in seconds)
 
 # Battery Low Charge Threshold
 low_soc = 20 #percentage
@@ -435,4 +435,5 @@ def main():
 
 main()
 time.sleep(5)#DEBUG
+print("Resetting ESP32...") #DEBUG
 reset()
