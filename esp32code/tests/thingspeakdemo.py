@@ -62,8 +62,6 @@ class MAX17048:
     
 ################################################################################################################
 # GLOBAL VARIABLES
-plantName = "Snake Plant" #DEBUG
-urlName = "Snake%20Plant"
 
 # Sleep Time (in minutes)
 sleep_time = 0.5
@@ -210,45 +208,23 @@ def wifi_connect():
 # Function to send data to ThingSpeak
 def send_all(all_field_data):
     global max_attempts
-    global plantName, temperature_field, moisture_field, light_field, led_field, humidity_field, soc_field
+    global temperature_field, moisture_field, light_field, led_field, humidity_field, soc_field
     temp = all_field_data[temperature_field-1]
     moisture = all_field_data[moisture_field-1]
     light = all_field_data[light_field-1]
     led = all_field_data[led_field-1]
     humidity = all_field_data[humidity_field-1]
     soc = all_field_data[soc_field-1]
-    payload = {
-        "plantName": plantName,
-        "microMoisture": str(moisture),
-        "microSun": str(light),
-        "microTemp": str(temp),
-        "microHumid": str(humidity),
-        "microLED": led,           # Already a string
-        "microBattery": str(soc)
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "x-api-key": "cb9e9bc88da7b9c97eee595a4bab04ef6a8709cd97f5f573d9509c375ac58267"
-    }
     for attempt in range(max_attempts):
         try:
-            print(f"Sending all sensor data")
-            response = urequests.post(
-                "http://172.20.10.2:3001/update-plant", # Depends on your ipconfig IP
-                json=payload,
-                headers=headers
-            )
-            if response.status_code != 200:
-                response.close()
-                print(f"Failed to send data: {response.status_code} - {response.text}")
-                raise Exception("Failed to send data")
-            else:
-                print("Data sent successfully")
+            print(f"Sending all sensor data to ThingSpeak")
+            url = f"https://api.thingspeak.com/update?api_key=ZJWOIMR5TIDMKGWZ&field{temperature_field}={temp}&field{moisture_field}={moisture}&field{light_field}={light}&field{led_field}={led}&field{humidity_field}={humidity}&field{soc_field}={soc}"
+            response = urequests.get(url)
             response.close()
             print("Data sent successfully") #DEBUG?
             return
         except Exception as e:
-            print(f"Error writing sensor data: {e}") #DEBUG
+            print(f"Error writing sensor data to ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
             if attempt < max_attempts-1:  # Wait before retrying
                 time.sleep(5)
@@ -259,59 +235,41 @@ def send_all(all_field_data):
 # Function to receive all data from ThingSpeak       
 def receive_all():
     global max_attempts
-    global urlName, plantName, temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
+    global temperature_field, moisture_field, humidity_field, light_field, soc_field, led_field
     #Set default values
     rec_temp = rec_moisture = rec_humidity = rec_light = rec_soc = 0
     rec_led = "000000" #debug default color
     # def_rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
     def_rec_list = [0,0,0,"000000",0,0]
-    headers = {
-        "Content-Type": "application/json",
-        "x-api-key": "cb9e9bc88da7b9c97eee595a4bab04ef6a8709cd97f5f573d9509c375ac58267"
-    }
     for attempt in range(max_attempts):
         try:
             url = f"https://api.thingspeak.com/channels/2831003/feeds.json?api_key=XB89AZ0PZ5K91BV2&results=2"
             # url = "helloworld" #debug (only for testing invalid url)
-            read_response = urequests.get(
-                f"http://172.20.10.2:3001/read-plant?plantName={urlName}", # Depends on your ipconfig IP
-                headers=headers
-            )
-            if read_response.status_code != 200:
-                read_response.close()
-                print(f"Failed to read data: {read_response.status_code} - {read_response.text}")
-                raise Exception("Failed to read data")
-            else:
-                print("Data read successfully")
-            import ujson
-            # print("Read Response:", read_response.status_code)
-            data_dict = ujson.loads(read_response.text)["data"]
-            read_response.close()
-            rec_temp = float(data_dict["temperature"])
-            rec_moisture = float(data_dict["moisture"])
-            rec_light = float(data_dict["sunlight"])
-            rec_led = data_dict["led"]
-            rec_led = rec_led.lstrip("#")  # Remove '#' if present (WARNING: MAY NOT BE NEEDED)
-            rec_humidity = float(data_dict["humidity"])
-            rec_soc = float(data_dict["battery"])
+            response = urequests.get(url)
+            data = response.json()
+            rec_temp = data["feeds"][-1][f"field{temperature_field}"]
+            rec_moisture = data["feeds"][-1][f"field{moisture_field}"]
+            rec_light = data["feeds"][-1][f"field{light_field}"]
+            rec_led = data["feeds"][-1][f"field{led_field}"]
+            rec_humidity = data["feeds"][-1][f"field{humidity_field}"]
+            rec_soc = data["feeds"][-1][f"field{soc_field}"]
             rec_list = [rec_temp, rec_moisture, rec_light, rec_led, rec_humidity, rec_soc]
-            # print(rec_list) #DEBUG
             for i in range(len(rec_list)):
                 if rec_list[i] == None:
                     if i == led_field-1:
                         rec_list[i] = "000000"
                     else:
                         rec_list[i] = 0
-            # response.close()
-            print("All  data received") #DEBUG?
+            response.close()
+            print("All ThingSpeak data received") #DEBUG?
             return rec_list
         except Exception as e:
-            print(f"Error reading all data: {e}") #DEBUG
+            print(f"Error reading all data from ThingSpeak Channel: {e}") #DEBUG
             print(f"Attempt {attempt+1} failed: {e}") #OPTIONAL
             if attempt < max_attempts-1:  # Wait before retrying
                 time.sleep(5+(attempt+1)*3)
             if attempt == max_attempts-1:
-                print("All attempts to receive data failed.")
+                print("All attempts to receive ThingSpeak data failed.")
                 def_rec_list = [0,0,0,"000000",0,0]
                 # print("Defaulting to: ", def_rec_list)
                 return def_rec_list

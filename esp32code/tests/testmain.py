@@ -59,7 +59,7 @@ max_timeout = 15 #time to wait for wifi connection (in seconds)
 low_soc = 20 #percentage
 
 #Soil Moisture Sensor Calibration
-cal_max = 435 #sensor value read with sensor submerged in water
+cal_max = 530 #sensor value read with sensor submerged in water
 cal_min = 300 #sensor value read with sensor in dry air
 
 # Wi-Fi Credentials
@@ -209,8 +209,8 @@ def wifi_connect():
 # MAIN FUNCTION
 
 # readtime = int(input("Enter the time for how sensors should be read (in seconds): "))
-readtime = 30
-start_time = time.time()
+# readtime = 30
+# start_time = time.time()
 #while (time.time() - start_time) < readtime:
 print("-------------------------------") #DEBUG?
 read_values = read_all()
@@ -219,16 +219,6 @@ print("Temperature: {:.2f} deg F".format(float(read_values[temperature_field-1])
 print("Humidity: {:.2f}%".format(float(read_values[humidity_field-1])))
 print("Light: {:.2f} lux".format(float(read_values[light_field-1])))
 print("SOC: {:.2f}%".format(float(read_values[soc_field-1])))
-set_color(0, 255, 0) #green
-time.sleep(2)
-set_color(0, 0, 255) #blue
-time.sleep(2)
-if wifi_connect():
-    send_all(read_values)
-    set_color(0, 255, 0)
-    time.sleep(2)
-else:
-    set_color(255, 0, 0)
-    time.sleep(2)
+
     
 set_color(0,0,0) #turn off LED
