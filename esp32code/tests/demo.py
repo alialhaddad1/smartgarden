@@ -156,6 +156,7 @@ def read_dht():
         dht_sensor.measure()  # Trigger measurement
         temp = dht_sensor.temperature()  # Get temperature in Celsius
         temp = (9*temp/5)+32
+        temp -= 3  #calibration adjustment
         hum = dht_sensor.humidity()  # Get humidity in %
         return temp, hum 
     except OSError as e:
@@ -166,6 +167,12 @@ def read_dht():
 def read_light():
     light_value = light_sensor_pin.read()
     light_lux = light_value * 1000 / 4095
+    if light_lux == 0:
+        return 0
+    else:
+        light_lux += 100 #calibration adjustment
+    if light_lux > 1000:
+        light_lux = 1000
     return light_lux
 
 # Function to read all sensor values
@@ -332,10 +339,10 @@ def hex_to_rgb(hex_str):
 def set_color(r, g, b):
     # Invert PWM for common anode (WARNING: DEPENDING ON OUR LED INDICATOR, THIS MIGHT NEED TO BE CHANGED)
     # Tested this function with a common anode RGB LED with 330 and 470 Ohm resistors
-    if r != 0 or b != 0:
-        red_pin.duty_u16(0)
-        green_pin.duty_u16(65535)
-        blue_pin.duty_u16(65535)
+    # if r != 0 or b != 0:
+    #     red_pin.duty_u16(0)
+    #     green_pin.duty_u16(65535)
+    #     blue_pin.duty_u16(65535)
     red_pin.duty_u16(65535 - int(r * 65535 / 255))
     green_pin.duty_u16(65535 - int(g * 65535 / 255))
     blue_pin.duty_u16(65535 - int(b * 65535 / 255))
@@ -399,7 +406,7 @@ def main():
     sent to ThingSpeak
     '''
     #Filter LED color (account for low battery override color)
-    read_values[soc_field-1] = 15 #DEBUG
+    #read_values[soc_field-1] = 15 #DEBUG
     if read_values[soc_field-1] < low_soc and read_values[soc_field-1] != -99:
         #Set LED color to red if battery is low
         read_values[led_field-1] = "FF0000" #low battery color (red?)
@@ -439,7 +446,7 @@ def main():
     wlan.active(False)  # Disable the Wi-Fi interface
 
     #Sleep for 'sleep_time' minutes
-    sleep_handler(sleep_time)
+    # sleep_handler(sleep_time)#DEBUG
     return
 
 #External wakeup (optional?)
@@ -452,10 +459,11 @@ print("2: Read all sensors for a specified time")
 print("3: Test LED color update with specified color")
 check = int(input("Enter selected testing mode: "))
 if check == 1:
-    for i in range(2):
+    for i in range(10):
         main()
         print("main() has finished executing") #DEBUG
-        set_color(0,0,0) #DEBUG
+        time.sleep(20)
+        #set_color(0,0,0) #DEBUG
     machine.reset() #DEBUG: this line makes main.py on the esp32 run again; could also run main() in an infinite loop?
 elif check == 2:
     readtime = int(input("Enter the time for how sensors should be read (in seconds): "))
